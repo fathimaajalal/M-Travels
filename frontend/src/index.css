@@ -1,0 +1,51 @@
+/* @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Lexend:wght@100..900&family=Noto+Serif+JP:wght@200..900&family=Outfit:wght@100..900&family=PT+Serif+Caption:ital@0;1&display=swap'); */
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Lexend:wght@100..900&family=Noto+Serif+JP:wght@200..900&family=Outfit:wght@100..900&family=PT+Serif+Caption:ital@0;1&family=Prata&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+a.active hr{
+    display: block;
+}
+/* 
+*{
+    font-family: 'Outfit';
+}
+
+.prata-regular {
+    font-family: "Prata", serif;
+    font-weight: 400;
+    font-style: normal;
+  }
+   */
+
+
+   *{
+    font-family: 'Outfit';
+}
+
+/* *{
+    font-family: 'EB Garamound';
+} */
+
+ .pt-serif-caption-regular {
+    font-family: "PT Serif Caption", serif;
+    font-weight: 400;
+    font-style: normal;
+  }
+  
+  .pt-serif-caption-regular-italic {
+    font-family: "PT Serif Caption", serif;
+    font-weight: 400;
+    font-style: italic;
+  }
+::-webkit-scrollbar{
+  display: none;
+}
+  @media (max-width:640px){
+    a.active{
+      background-color: black;
+      color: white;
+    }
+  }
