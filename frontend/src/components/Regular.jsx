@@ -9,7 +9,14 @@ const Regular = () => {
 
     useEffect(() => {
         setRegularBuses(busRoutes.slice(0, 3));
-    }, []);
+    }, [busRoutes]);
+
+    // useEffect(() => {
+    //     if (busRoutes) {
+    //         setRegularBuses(busRoutes.slice(0, 3));
+    //     }
+    // }, [busRoutes]);
+    
 
     return (
         <div className='my-10'>
@@ -20,7 +27,7 @@ const Regular = () => {
                 </p>
             </div>
 
-            {/* Rendering Busroutes */}
+            {/* Rendering busRoutes */}
             <div className='grid grid-cols-3 gap-40 gap-y-6'>
                 {regularBuses.map((item, index) => (
                     <BusItem

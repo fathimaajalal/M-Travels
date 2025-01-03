@@ -4,14 +4,22 @@ import Title from './Title';
 import BusItem from './BusItem';
 
 const Tourist = () => {
-    const { busRoutes } = useContext(BookContext);
+    const { busRoutes } = useContext(BookContext); // Fetch busRoutes from context
     const [touristBuses, setTouristBuses] = useState([]);
+
+    // useEffect(() => {
+    //     if (busRoutes) {
+    //         const filteredVehicles = busRoutes.filter(route => route.category === "Tourist");
+    //         setTouristBuses(filteredVehicles);
+    //     }
+    // }, [busRoutes]);
+    
 
     useEffect(() => {
         // Filter buses specifically for "Tourist Buses"
         const filteredBuses = busRoutes.filter((bus) => bus.category === "Tourist");
         setTouristBuses(filteredBuses);
-    }, [busRoutes]);
+    }, [busRoutes]); // Only depend on busRoutes
 
     return (
         <div className='my-10'>

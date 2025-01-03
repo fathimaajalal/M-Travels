@@ -12,10 +12,12 @@ import Bookings from './pages/Bookings'
 import NavBar from './components/NavBar'
 import Footer from './components/Footer'
 import SearchBar from './components/SearchBar'
+// import { ToastContainer } from 'react-toastify';
 
 const App = () => {
   return (
     <div className='px-4 sm:px-[5vw] md:px-[7vw] lg:px-[9vw]'>
+     
       <NavBar />
       <SearchBar />
       <Routes>
@@ -29,6 +31,7 @@ const App = () => {
         <Route path ='/book-ticket' element={<BookTicket />}/>
         <Route path ='/bookings' element={<Bookings />}/>
       </Routes>
+      {/* <ToastContainer /> */}
       <Footer />
     </div>
   )

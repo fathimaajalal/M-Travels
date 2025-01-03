@@ -8,6 +8,7 @@ import mongoose from 'mongoose';
 import connectCloudinary from './config/cloudinary.js';
 import userRouter from './routes/userRoute.js';
 import vehicleRouter from './routes/vehicleRoute.js';
+import bookingRouter from './routes/bookingRoute.js';
 
 
 // App Config
@@ -23,6 +24,7 @@ app.use(cors());
 // API Endpoints
 app.use('/api/user' , userRouter)
 app.use('/api/vehicle',vehicleRouter)
+app.use('/api/booking',bookingRouter)
 
 app.get('/', (req, res) => {
   res.send('API Working');

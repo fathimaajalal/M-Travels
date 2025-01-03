@@ -8,7 +8,7 @@ const Collection = () => {
   
   const { busRoutes, search, showSearch } = useContext(BookContext);
   const [showFilter, setShowFilter] = useState(false);
-  const [filterBusRoutes, setFilterBusRoutes] = useState([]);
+  const [filterbusRoutes, setFilterbusRoutes] = useState([]);
   const [category, setCategory] = useState([]);
 
   const toggleCategory = (e) => {
@@ -31,17 +31,17 @@ const Collection = () => {
       busRoutesCopy = busRoutesCopy.filter(item => category.includes(item.category))
     }
 
-    setFilterBusRoutes(busRoutesCopy);
+    setFilterbusRoutes(busRoutesCopy);
   }
 
     // useEffect( () => {
-    //   setFilterBusRoutes(busRoutes)
+    //   setFilterbusRoutes(busRoutes)
     // },[]
     // )
 
     useEffect (()=>{
         applyFilter();
-    },[category, search, showSearch])
+    },[category, search, showSearch, busRoutes])
 
     // useEffect(()=>{
     //     console.log(category);
@@ -88,7 +88,7 @@ const Collection = () => {
           {/* Map Routes */}
           <div className='grid grid-cols-3 gap-40 gap-y-6'>
            {   
-            filterBusRoutes.map((item,index) => (
+            filterbusRoutes.map((item,index) => (
               <BusItem
               key={index}
               id={item._id}

@@ -27,6 +27,9 @@ import cancel_icon from './cancel_icon.png'
 import star_icon from './star_icon.png'
 import star_dull from './star_dull.png'
 import about_img from './about_img.png'
+import stripe_logo from './stripe_logo.jpeg'
+import razorpay_logo from './razorpay_logo.png'
+import kk_timing from './kk_timing.png'
 
 export const assets = {
   logo,
@@ -57,21 +60,24 @@ export const assets = {
   payment_icon,
   cancel_icon,
   star_dull,
-  star_icon
+  star_icon,
+  stripe_logo,
+  razorpay_logo,
+  kk_timing
 }
 
 export const busRoutes = [
     {
       _id: "1",
-      name: "Ernakulam to Thrissur",
-      description: "A scenic 70km route passing through Aluva and Angamaly.",
-      price: 55,
+      name: "Kumily to Kottayam",
+      description: "A scenic 70km route passing through Kumily and Kottayam.",
+      price: 100,
       image: [
        sarah,
-        conty_rr,
+       kk_timing
       ],
-      departureTime: "07:00 AM",
-      arrivalTime: "09:30 AM",
+      departureTime: "06:30 AM",
+      arrivalTime: "A",
       totalSeats: 40,
       availableSeats: 12,
       seating: "Seats Available",
@@ -79,60 +85,60 @@ export const busRoutes = [
     },
     {
       _id: "2",
-      name: "Munnar to Adimali",
+      name: "Kumily - Vagamon",
       description: "A mountain ride through picturesque tea estates.",
-      price: 45,
+      price: 100,
       image: [
         rr,
-        conty_rr,
+      
       ],
-      departureTime: "08:30 AM",
-      arrivalTime: "10:00 AM",
+      departureTime: "07:30 AM",
+      arrivalTime: "12:00 PM",
       totalSeats: 30,
-      availableSeats: 0,
+      availableSeats: 10,
       seating: "Standing Only",
       category: "Regular",
     },
-    {
-      _id: "3",
-      name: "Perumbavoor to Kothamangalam",
-      description: "Quick 30-minute trip on a busy local route.",
-      price: 20,
-      image: [
-        vagamon
-      ],
-      departureTime: "06:45 AM",
-      arrivalTime: "07:15 AM",
-      totalSeats: 25,
-      availableSeats: 5,
-      seating: "Seats Available",
-      category: "Regular",
-    },
+    // {
+    //   _id: "3",
+    //   name: "Perumbavoor to Kothamangalam",
+    //   description: "Quick 30-minute trip on a busy local route.",
+    //   price: 20,
+    //   image: [
+    //     vagamon
+    //   ],
+    //   departureTime: "06:45 AM",
+    //   arrivalTime: "07:15 AM",
+    //   totalSeats: 25,
+    //   availableSeats: 5,
+    //   seating: "Seats Available",
+    //   category: "Regular",
+    // },
      // Tourist Bus
      {
       _id: "3",
-      name: "Thekkady to Vagamon",
+      name: "Pashuppara - Kumily",
       description: "A breathtaking 3-hour journey through rolling hills and lush green plantations.",
       price: 100,
       image: [vagamon],
-      category: "Tourist",
+      category: "Regular",
       departureTime: "06:00 AM",
       arrivalTime: "09:00 AM",
-      totalSeats: 50,
-      availableSeats: 15,
+      totalSeats: 25,
+      availableSeats: 10,
       seating: "Seats Available",
     },
     {
       _id: "4",
-      name: "Kochi to Alleppey",
-      description: "A 2-hour serene ride along the coastal road, perfect for exploring houseboats.",
-      price: 75,
+      name: "Tourist Bus",
+      description: "Enjoy a comfortable and reliable journey with our tourist bus service, perfect for all your travel needs.",
+      price: 100,
       image: [vagamon],
       category: "Tourist",
-      departureTime: "10:00 AM",
-      arrivalTime: "12:00 PM",
+      departureTime: "",
+      arrivalTime: "",
       totalSeats: 40,
-      availableSeats: 20,
+      availableSeats: 40,
       seating: "Seats Available",
     },
 // Vehicles for Shoots

@@ -12,7 +12,14 @@ const busRouteSchema = new mongoose.Schema({
     availableSeats: {type:Number},
     totalSeats: {type:Number},
     seating: {type:String},
-    date: {type: Number}
+    date: {type: Number},
+    stops: [
+        {
+            location: { type: String, required: true },
+            time: { type: String, required: true },
+        },
+    ],
+  
 })
 
 const busRouteModel = mongoose.models.busRoute || mongoose.model("busRoute",busRouteSchema);

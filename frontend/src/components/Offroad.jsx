@@ -7,6 +7,14 @@ const Offroad = () => {
     const { busRoutes } = useContext(BookContext);
     const [offroadVehicles, setOffroadVehicles] = useState([]);
 
+    // useEffect(() => {
+    //     if (busRoutes) {
+    //         const filteredVehicles = busRoutes.filter(route => route.category === "Offroad");
+    //         setOffroadVehicles(filteredVehicles);
+    //     }
+    // }, [busRoutes]);
+    
+
     useEffect(() => {
         // Filter vehicles specifically for offroading
         const filteredVehicles = busRoutes.filter(route => route.category === "Offroad");

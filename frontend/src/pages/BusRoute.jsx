@@ -1,37 +1,30 @@
-import React, { useContext, useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import React, { useContext, useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { BookContext } from '../context/BookContext';
-import BusItem from '../components/BusItem';
-import Title from '../components/Title';
 import { assets } from '../assets/assets';
 
-
 const BusRoute = () => {
-
-  const {routeId} = useParams();
-  const {busRoutes,currency} = useContext(BookContext);
-  const [routeData,setRouteData] = useState(false);
-  const [image,setImage] = useState('');
+  const { routeId } = useParams();
+  const { busRoutes, currency } = useContext(BookContext);
+  const [routeData, setRouteData] = useState(false);
+  const [image, setImage] = useState('');
 
   const fetchRouteData = async () => {
     busRoutes.map((item) => {
-    if(item._id === routeId){
-      setRouteData(item)
-      setImage(item.image[0]);
-      console.log(item);
-      return null;
-    }
+      if (item._id === routeId) {
+        setRouteData(item);
+        setImage(item.image[0]);
+        console.log(item);
+        return null;
+      }
+    });
+  };
 
-  })
-}
-
-  useEffect (() => {
+  useEffect(() => {
     fetchRouteData();
-  }, [routeId, busRoutes]
-  )
+  }, [routeId, busRoutes]);
 
-  return routeData ?  (
-
+  return routeData ? (
     <div className="border-t-2 pt-10 transition-opacity ease-in duration-500 opacity-100">
       {/* Route Data */}
       <div className="flex gap-12 sm:gap-12 flex-col sm:flex-row">
@@ -56,53 +49,72 @@ const BusRoute = () => {
         {/* Route Info */}
         <div className="flex-1">
           <h1 className="text-2xl font-medium mt-2">{routeData.name}</h1>
-              <div className='flex items-center gap-1 mt-2'>
-                <img src={assets.star_icon} className="w-3 5" alt="" />
-                <img src={assets.star_icon} className="w-3 5" alt="" />
-                <img src={assets.star_icon} className="w-3 5" alt="" />
-                <img src={assets.star_icon} className="w-3 5" alt="" />
-                <img src={assets.star_dull} className="w-3 5" alt="" />
-                <p className='text-sm pl-2'>(23)</p>
-              </div>
-              <p className='mt-5 text-3xl font-medium'>{currency}{routeData.price}</p>
-              <p className='mt-5 text-gray-500 md:w-4/5'>{routeData.description}</p>
-              <br />
-             <button className='bg-black text-white px-8 py-3 text-sm active:bg-gray-700'>BOOK NOW</button>
-             <hr className='mt-8 sm:w-4/5' />
-             <div className='text-sm text-gray-500 mt-5 flex flex-col gap-1'>
-                
-             <p>Secure Payments.</p>
-                <p>Comfortable Rides.</p>
-                <p>Easy Cancellations.</p>
-             </div>
-        </div>
-        </div>
-        {/* Description & Review */}
-      
-        <div className="mt-20">
-          <div className="flex">
-            <b className="border px-5 py-3 text-sm cursor-pointer">Description</b>
-            <p className="border px-5 py-3 text-sm cursor-pointer">Reviews (122)</p>
+          <div className="flex items-center gap-1 mt-2">
+            <img src={assets.star_icon} className="w-3 5" alt="" />
+            <img src={assets.star_icon} className="w-3 5" alt="" />
+            <img src={assets.star_icon} className="w-3 5" alt="" />
+            <img src={assets.star_icon} className="w-3 5" alt="" />
+            <img src={assets.star_dull} className="w-3 5" alt="" />
+            <p className="text-sm pl-2">(23)</p>
           </div>
+          <p className="mt-5 text-3xl font-medium">
+            {currency}
+            {routeData.price}
+          </p>
+          <p className="mt-5 text-gray-500 md:w-4/5">{routeData.description}</p>
 
-  {/* Description Content */}
-  <div className="flex flex-col gap-4 border px-6 py-6 text-sm text-gray-500">
-    <p>
-      An e-commerce website is an online platform that facilitates the buying
-      and selling of goods or services over the internet.
-    </p>
-    <p>
-      E-commerce websites typically display products or services along with
-      detailed descriptions, pricing, and user reviews, allowing customers to
-      make informed purchasing decisions.
-    </p>
-  </div>
-</div>
+          {/* Conditional Details for Buses */}
+          {routeData.category === 'Regular' && (
+            <div className="mt-5 text-sm text-gray-600">
+              <p>Departure Time: {routeData.departureTime || 'N/A'}</p>
+              <p>Arrival Time: {routeData.arrivalTime || 'N/A'}</p>
+              <p>
+                Seats: {routeData.availableSeats || 0} /{' '}
+                {routeData.totalSeats || 'N/A'}
+              </p>
+              <p>Seating: {routeData.seating || 'Standard'}</p>
+            </div>
+          )}
+
+          <br />
+          <button className="bg-black text-white px-8 py-3 text-sm active:bg-gray-700">
+            BOOK NOW
+          </button>
+          <hr className="mt-8 sm:w-4/5" />
+          <div className="text-sm text-gray-500 mt-5 flex flex-col gap-1">
+            <p>Secure Payments.</p>
+            <p>Comfortable Rides.</p>
+            <p>Easy Cancellations.</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Description & Review */}
+      <div className="mt-20">
+        <div className="flex">
+          <b className="border px-5 py-3 text-sm cursor-pointer">Description</b>
+          <p className="border px-5 py-3 text-sm cursor-pointer">
+            Reviews (122)
+          </p>
+        </div>
+
+        {/* Description Content */}
+        <div className="flex flex-col gap-4 border px-6 py-6 text-sm text-gray-500">
+          <p>
+            An e-commerce website is an online platform that facilitates the
+            buying and selling of goods or services over the internet.
+          </p>
+          <p>
+            E-commerce websites typically display products or services along
+            with detailed descriptions, pricing, and user reviews, allowing
+            customers to make informed purchasing decisions.
+          </p>
+        </div>
+      </div>
     </div>
-  ) : <div className='opacity-0'></div>
-}
+  ) : (
+    <div className="opacity-0"></div>
+  );
+};
 
-export default BusRoute
-{/* <p className="text-gray-700 mb-4">{routeData.description}</p>
-          <p className="text-lg font-bold">Price: ${routeData.price}</p> */}
-          {/* Add additional product details here */}
+export default BusRoute;

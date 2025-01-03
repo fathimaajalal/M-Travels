@@ -1,3 +1,21 @@
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Lexend:wght@100..900&family=Noto+Serif+JP:wght@200..900&family=Outfit:wght@100..900&family=PT+Serif+Caption:ital@0;1&family=Prata&display=swap');
+
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+*{
+    font-family: Outfit;
+}
+
+select,input,textarea{
+    border: 1px solid #c2c2c2;
+    outline-color: #C586A5;
+    border-radius: 4px;
+}
+
+.active{
+    background-color: #ffebf5;
+    border-color: #C586A5;
+}

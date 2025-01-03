@@ -61,6 +61,7 @@ const listVehicle = async(req,res) => {
     }
 }
 
+
 // remove vehicle
 const removeVehicle = async(req,res) => {
     try {
