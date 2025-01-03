@@ -6,7 +6,7 @@ import Add from './pages/Add'
 import List from './pages/List'
 import Bookings from './pages/Bookings'
 import Login from './components/Login'
-// import Update from './pages/Update' 
+import Update from './pages/Update' 
 import { ToastContainer } from 'react-toastify';
 
 export const backendUrl = import.meta.env.VITE_BACKEND_URL
@@ -35,7 +35,7 @@ const App = () => {
                 <Route path='/add' element={<Add token={token} />} />
                 <Route path='/list' element={<List token={token} />} />
                 <Route path='/bookings' element={<Bookings token={token} />} />
-                {/* <Route path='/update' element={<Update token={token} />} /> */}
+                <Route path='/update' element={<Update token={token} />} />
               </Routes>
             </div>
           </div>

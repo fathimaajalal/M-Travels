@@ -86,4 +86,33 @@ const singleVehicle = async(req,res) => {
     }
 }
 
-export { listVehicle, addVehicle, removeVehicle, singleVehicle }
+// update vehicle
+const updateVehicle = async (req, res) => {
+    try {
+      const { id, name, description, price, category, departureTime, arrivalTime, availableSeats, totalSeats, seating } = req.body
+  
+      const updatedVehicle = await busRouteModel.findByIdAndUpdate(
+        id,
+        {
+          name,
+          description,
+          price,
+          category,
+          departureTime,
+          arrivalTime,
+          availableSeats,
+          totalSeats,
+          seating,
+        },
+        { new: true }
+      )
+  
+      res.json({ success: true, message: "Vehicle updated successfully", vehicle: updatedVehicle })
+    } catch (error) {
+      console.log(error)
+      res.json({ success: false, message: error.message })
+    }
+  }
+  
+
+export { listVehicle, addVehicle, removeVehicle, singleVehicle, updateVehicle }
