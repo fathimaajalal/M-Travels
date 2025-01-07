@@ -9,7 +9,14 @@ vehicleRouter.post('/add',adminAuth,upload.fields([{name:'image1',maxCount:1},{n
 vehicleRouter.post('/remove',adminAuth,removeVehicle);
 vehicleRouter.post('/single',singleVehicle);
 vehicleRouter.get('/list',listVehicle);
-vehicleRouter.post('/update', adminAuth, updateVehicle)
+// vehicleRouter.post('/update', adminAuth, updateVehicle)
+vehicleRouter.post('/update', adminAuth, upload.fields([
+    { name: 'image1', maxCount: 1 },
+    { name: 'image2', maxCount: 1 },
+    { name: 'image3', maxCount: 1 },
+    { name: 'image4', maxCount: 1 },
+  ]), updateVehicle);
+  
 
 
 export default vehicleRouter
