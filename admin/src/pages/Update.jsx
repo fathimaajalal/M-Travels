@@ -1,4 +1,3 @@
-
 import axios from 'axios'
 import React, { useEffect, useState } from 'react'
 import { backendUrl, currency } from '../App'
@@ -18,12 +17,16 @@ const Update = ({ token }) => {
         availableSeats: '',
         totalSeats: '',
         seating: '',
+        image1: null,
+        image2: null,
+        image3: null,
+        image4: null,
+        stops: [{ stopName: '', priceToNextStop: '' }], // Initialize with one stop
     })
 
     const fetchList = async () => {
         try {
             const response = await axios.get(backendUrl + '/api/vehicle/list')
-
             if (response.data.success) {
                 setList(response.data.vehicles)
             } else {
@@ -58,7 +61,46 @@ const Update = ({ token }) => {
         }))
     }
 
-    //   
+    const handleStopChange = (index, e) => {
+        const { name, value } = e.target
+        const updatedStops = [...updatedDetails.stops]
+        updatedStops[index][name] = value
+        setUpdatedDetails(prevState => ({
+            ...prevState,
+            stops: updatedStops,
+        }))
+    }
+
+    const handleAddStop = () => {
+        setUpdatedDetails(prevState => ({
+            ...prevState,
+            stops: [...prevState.stops, { stopName: '', priceToNextStop: '' }],
+        }))
+    }
+
+    const handleRemoveStop = (index) => {
+        const updatedStops = updatedDetails.stops.filter((_, i) => i !== index)
+        setUpdatedDetails(prevState => ({
+            ...prevState,
+            stops: updatedStops,
+        }))
+    }
+
+    const handleImageChange = (e, imageNumber) => {
+        const file = e.target.files[0];
+        setUpdatedDetails((prevState) => ({
+            ...prevState,
+            [`image${imageNumber}`]: file,
+        }));
+    };
+
+    const handleImageRemove = (imageNumber) => {
+        setUpdatedDetails((prevState) => ({
+            ...prevState,
+            [`image${imageNumber}`]: null,
+        }));
+    };
+
     const handleUpdateSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -73,6 +115,12 @@ const Update = ({ token }) => {
             formData.append('availableSeats', updatedDetails.availableSeats);
             formData.append('totalSeats', updatedDetails.totalSeats);
             formData.append('seating', updatedDetails.seating);
+
+            // Append stops
+            updatedDetails.stops.forEach((stop, index) => {
+                formData.append(`stops[${index}][stopName]`, stop.stopName);
+                formData.append(`stops[${index}][priceToNextStop]`, stop.priceToNextStop);
+            });
 
             // Add files to FormData
             if (updatedDetails.image1) formData.append('image1', updatedDetails.image1);
@@ -99,7 +147,6 @@ const Update = ({ token }) => {
             toast.error(error.message);
         }
     };
-
 
     useEffect(() => {
         fetchList()
@@ -133,10 +180,13 @@ const Update = ({ token }) => {
 
             {/* Update Form (if a vehicle is selected) */}
             {selectedVehicle && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-                    <div className="bg-white rounded-lg shadow-lg p-6 max-w-2xl w-full space-y-4">
-                        <h2 className="text-2xl font-semibold mb-4 text-center">Update Vehicle</h2>
-                        <form onSubmit={handleUpdateSubmit} className="space-y-4">
+               <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+               <div className="bg-white rounded-lg shadow-lg p-6 max-w-2xl w-full space-y-4 max-h-[100vh] overflow-y-auto"> {/* Make the form container scrollable */}
+                 <h2 className="text-2xl font-semibold mb-4 text-center">Update Vehicle</h2>
+                 <form onSubmit={handleUpdateSubmit} className="space-y-4">
+                            {/* Form fields for vehicle info */}
+                            {/* ... (other fields remain the same) */}
+
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <label className="flex flex-col">
                                     <span className="text-sm font-medium mb-1">Name:</span>
@@ -220,22 +270,83 @@ const Update = ({ token }) => {
                             </label>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {[1, 2, 3, 4].map((num) => (
-                                    <label key={num} className="flex flex-col">
+                                    <div key={num} className="flex flex-col">
                                         <span className="text-sm font-medium mb-1">Image {num}:</span>
-                                        <input
-                                            type="file"
-                                            name={`image${num}`}
-                                            onChange={(e) =>
-                                                setUpdatedDetails((prevState) => ({
-                                                    ...prevState,
-                                                    [`image${num}`]: e.target.files[0],
-                                                }))
-                                            }
-                                            className="border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        />
-                                    </label>
+                                        {updatedDetails[`image${num}`] ? (
+                                            <div className="relative">
+                                                <img
+                                                    src={URL.createObjectURL(updatedDetails[`image${num}`])}
+                                                    alt={`Image ${num}`}
+                                                    className="w-32 h-32 object-cover mb-2"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleImageRemove(num)}
+                                                    className="absolute top-0 right-0 text-red-600 bg-white p-1 rounded-full"
+                                                >
+                                                    &times;
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <input
+                                                type="file"
+                                                name={`image${num}`}
+                                                onChange={(e) => handleImageChange(e, num)}
+                                                className="border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            />
+                                        )}
+                                    </div>
+                                    
                                 ))}
                             </div>
+                            
+
+                            {/* Stops Section */}
+                            <div className="space-y-4">
+                                <h3 className="text-lg font-semibold">Stops</h3>
+                                {updatedDetails.stops.map((stop, index) => (
+                                    <div key={index} className="grid grid-cols-2 gap-4">
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-medium mb-1">Stop Name:</span>
+                                            <input
+                                                type="text"
+                                                name="stopName"
+                                                value={stop.stopName}
+                                                onChange={(e) => handleStopChange(index, e)}
+                                                className="border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-medium mb-1">Price to Next Stop:</span>
+                                            <input
+                                                type="number"
+                                                name="priceToNextStop"
+                                                value={stop.priceToNextStop}
+                                                onChange={(e) => handleStopChange(index, e)}
+                                                className="border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                required
+                                            />
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemoveStop(index)}
+                                            className="text-red-600 text-sm mt-2"
+                                        >
+                                            Remove Stop
+                                        </button>
+                                    </div>
+                                ))}
+                                <button
+                                    type="button"
+                                    onClick={handleAddStop}
+                                    className="text-blue-600 text-sm"
+                                >
+                                    Add Stop
+                                </button>
+                            </div>
+
+                            {/* Submit Button */}
                             <div className="flex justify-end gap-4 mt-6">
                                 <button
                                     type="button"
@@ -255,7 +366,6 @@ const Update = ({ token }) => {
                     </div>
                 </div>
             )}
-
         </>
     )
 }

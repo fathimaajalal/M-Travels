@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { BookContext } from '../context/BookContext';
 import { assets } from '../assets/assets';
 
@@ -20,6 +20,11 @@ const BusRoute = () => {
     });
   };
 
+  const navigate = useNavigate();
+  const handleBookNow = (routeId) => {
+    navigate('/book-ticket', { state: { routeId } });
+  };
+  
   useEffect(() => {
     fetchRouteData();
   }, [routeId, busRoutes]);
@@ -77,7 +82,11 @@ const BusRoute = () => {
           )}
 
           <br />
-          <button className="bg-black text-white px-8 py-3 text-sm active:bg-gray-700">
+          <button 
+          className="bg-black text-white px-8 py-3 text-sm active:bg-gray-700"
+          // onClick={handleBookNow}
+          onClick={() => handleBookNow(routeData._id)}
+          >
             BOOK NOW
           </button>
           <hr className="mt-8 sm:w-4/5" />

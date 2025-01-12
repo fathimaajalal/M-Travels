@@ -17,6 +17,4 @@ vehicleRouter.post('/update', adminAuth, upload.fields([
     { name: 'image4', maxCount: 1 },
   ]), updateVehicle);
   
-
-
 export default vehicleRouter

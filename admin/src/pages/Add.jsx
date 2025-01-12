@@ -21,6 +21,22 @@ const Add = ({token}) => {
     const [departureTime, setDepartureTime] = useState('');
     const [seating, setSeating] = useState('');
 
+    const [stops, setStops] = useState([{ stopName: '', priceToNextStop: '' }]);
+    const handleStopChange = (index, e) => {
+        const values = [...stops];
+        values[index][e.target.name] = e.target.value;
+        setStops(values);
+    };
+    const addStop = () => {
+        setStops([...stops, { stopName: '', priceToNextStop: '' }]);
+    };
+    
+    const removeStop = (index) => {
+        const values = [...stops];
+        values.splice(index, 1);
+        setStops(values);
+    };
+
     const onSubmitHandler = async (e) => {
         e.preventDefault();
 
@@ -41,6 +57,15 @@ const Add = ({token}) => {
             image2 && formData.append('image2',image2)
             image3 && formData.append('image3',image3)
             image4 && formData.append('image4',image4)
+
+
+            stops.forEach((stop, index) => {
+                formData.append(`stops[${index}][stopName]`, stop.stopName);
+                formData.append(`stops[${index}][priceToNextStop]`, stop.priceToNextStop);
+            });
+    
+
+
 
             const response = await axios.post(backendUrl + "/api/vehicle/add",formData,{headers:{token}})
 
@@ -163,8 +188,34 @@ const Add = ({token}) => {
                 <label htmlFor="bestRoute"></label>
             </div> */}
 
-            <button type='submit' className='w-28 py-3 mt-4 bg-black text-white'>ADD</button>
+            {/* Stops Input */}
+        <div>
+            <p className="mb-2">Stops</p>
+            {stops.map((stop, index) => (
+                <div key={index} className="flex gap-2">
+                    <input
+                        type="text"
+                        name="stopName"
+                        value={stop.stopName}
+                        onChange={(e) => handleStopChange(index, e)}
+                        placeholder="Stop Name"
+                        className="w-full px-3 py-2"
+                    />
+                    <input
+                        type="number"
+                        name="priceToNextStop"
+                        value={stop.priceToNextStop}
+                        onChange={(e) => handleStopChange(index, e)}
+                        placeholder="Price to Next Stop"
+                        className="w-full px-3 py-2"
+                    />
+                    <button type="button" onClick={() => removeStop(index)}>-</button>
+                </div>
+            ))}
+            <button type="button" onClick={addStop}>Add Stop</button>
+        </div>
 
+        <button type="submit" className="w-28 py-3 mt-4 bg-black text-white">ADD</button>
         </form>
       );
 }

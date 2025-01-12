@@ -3,52 +3,54 @@ import busRouteModel from "../models/busRouteModel.js"
 
 
 // add vehicle
-const addVehicle = async(req,res) => {
-    try {
-        const { name, description, price, category, departureTime, arrivalTime, totalSeats, availableSeats, seating } = req.body
-        
-        const image1 = req.files.image1 && req.files.image1[0]
-        const image2 = req.files.image2 && req.files.image2[0]
-        const image3 = req.files.image3 && req.files.image3[0]
-        const image4 = req.files.image4 && req.files.image4[0]
+const addVehicle = async (req, res) => {
+  try {
+      const { name, description, price, category, departureTime, arrivalTime, totalSeats, availableSeats, seating, stops } = req.body;
+      
+      // Handle image uploads
+      const image1 = req.files.image1 && req.files.image1[0];
+      const image2 = req.files.image2 && req.files.image2[0];
+      const image3 = req.files.image3 && req.files.image3[0];
+      const image4 = req.files.image4 && req.files.image4[0];
 
-        const images = [image1,image2,image3,image4].filter((item)=> item !== undefined)
+      const images = [image1, image2, image3, image4].filter((item) => item !== undefined);
 
-        let imagesUrl = await Promise.all(
-            images.map(async (item ) => {
-                let result = await cloudinary.uploader.upload(item.path,{resource_type:'image'})
-                return result.secure_url
-            })
-        )
+      let imagesUrl = await Promise.all(
+          images.map(async (item) => {
+              let result = await cloudinary.uploader.upload(item.path, { resource_type: 'image' });
+              return result.secure_url;
+          })
+      );
 
-        const vehicleData = {
-            name,
-            description,
-            price: Number(price),
-            category,
-        
-            departureTime,
-            arrivalTime,
-            availableSeats: Number(availableSeats),
-            totalSeats: Number(totalSeats),
-            seating ,
-            image: imagesUrl,
-            date: Date.now()
-            // color: JSON.parse(color)
-       }
+      // Add the stops data to the vehicle data
+      const vehicleData = {
+          name,
+          description,
+          price: Number(price),
+          category,
+          departureTime,
+          arrivalTime,
+          availableSeats: Number(availableSeats),
+          totalSeats: Number(totalSeats),
+          seating,
+          stops: stops || [],  // Ensure stops are included
+          image: imagesUrl,
+          date: Date.now()
+      };
 
-       console.log(vehicleData);
+      console.log(vehicleData);
 
-       const vehicle = new busRouteModel(vehicleData);
-       await vehicle.save()
+      // Save the vehicle data
+      const vehicle = new busRouteModel(vehicleData);
+      await vehicle.save();
 
-        res.json({success: true, message: "Vehicle Added"})
+      res.json({ success: true, message: "Vehicle Added" });
 
-    } catch (error) {
-        console.log(error)
-        res.json({success:false, message:error.message})
-    }
-}
+  } catch (error) {
+      console.log(error);
+      res.json({ success: false, message: error.message });
+  }
+};
 
 // list vehicle
 const listVehicle = async(req,res) => {
@@ -113,11 +115,45 @@ const singleVehicle = async(req,res) => {
 //       res.json({ success: false, message: error.message })
 //     }
 //   }
-
 const updateVehicle = async (req, res) => {
-    try {
-      const {
-        id,
+  try {
+    const {
+      id,
+      name,
+      description,
+      price,
+      category,
+      departureTime,
+      arrivalTime,
+      availableSeats,
+      totalSeats,
+      seating,
+    } = req.body;
+
+    // Handle updated images if provided
+    const image1 = req.files?.image1 && req.files.image1[0];
+    const image2 = req.files?.image2 && req.files.image2[0];
+    const image3 = req.files?.image3 && req.files.image3[0];
+    const image4 = req.files?.image4 && req.files.image4[0];
+
+    const images = [image1, image2, image3, image4].filter((item) => item !== undefined);
+
+    let imagesUrl = [];
+    if (images.length > 0) {
+      imagesUrl = await Promise.all(
+        images.map(async (item) => {
+          const result = await cloudinary.uploader.upload(item.path, { resource_type: "image" });
+          return result.secure_url;
+        })
+      );
+    }
+
+    // Find the vehicle and update its details
+    const vehicle = await busRouteModel.findById(id);
+
+    const updatedVehicle = await busRouteModel.findByIdAndUpdate(
+      id,
+      {
         name,
         description,
         price,
@@ -127,53 +163,15 @@ const updateVehicle = async (req, res) => {
         availableSeats,
         totalSeats,
         seating,
-      } = req.body;
-  
-      // Handle updated images if provided
-      const image1 = req.files?.image1 && req.files.image1[0];
-      const image2 = req.files?.image2 && req.files.image2[0];
-      const image3 = req.files?.image3 && req.files.image3[0];
-      const image4 = req.files?.image4 && req.files.image4[0];
-  
-      const images = [image1, image2, image3, image4].filter((item) => item !== undefined);
-  
-      let imagesUrl = [];
-      if (images.length > 0) {
-        imagesUrl = await Promise.all(
-          images.map(async (item) => {
-            const result = await cloudinary.uploader.upload(item.path, { resource_type: "image" });
-            return result.secure_url;
-          })
-        );
-      }
-  
-      // Find the vehicle and update its details
-      const vehicle = await busRouteModel.findById(id);
-  
-      const updatedVehicle = await busRouteModel.findByIdAndUpdate(
-        id,
-        {
-          name,
-          description,
-          price,
-          category,
-          departureTime,
-          arrivalTime,
-          availableSeats,
-          totalSeats,
-          seating,
-          image: imagesUrl.length > 0 ? imagesUrl : vehicle.image, // Update images only if new ones are provided
-        },
-        { new: true }
-      );
-  
-      res.json({ success: true, message: "Vehicle updated successfully", vehicle: updatedVehicle });
-    } catch (error) {
-      console.log(error);
-      res.json({ success: false, message: error.message });
-    }
-  };
-  
-  
+        image: imagesUrl.length > 0 ? imagesUrl : vehicle.image, // Update images only if new ones are provided
+      },
+      { new: true }
+    );
 
+    res.json({ success: true, message: "Vehicle updated successfully", vehicle: updatedVehicle });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
 export { listVehicle, addVehicle, removeVehicle, singleVehicle, updateVehicle }

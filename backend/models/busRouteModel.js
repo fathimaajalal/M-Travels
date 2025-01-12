@@ -13,12 +13,13 @@ const busRouteSchema = new mongoose.Schema({
     totalSeats: {type:Number},
     seating: {type:String},
     date: {type: Number},
-    stops: [
-        {
-            location: { type: String, required: true },
-            time: { type: String, required: true },
-        },
-    ],
+
+        // New field for 'Regular' buses
+        stops: [{
+            stopName: { type: String, required: true },
+            priceToNextStop: { type: Number, required: true }, // Price from this stop to the next stop
+        }],
+
   
 })
 
