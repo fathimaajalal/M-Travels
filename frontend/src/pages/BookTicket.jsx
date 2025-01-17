@@ -264,8 +264,55 @@ const BookTicket = () => {
       <div className="mt-8">
         <div className="mt-12">
           <Title text1="PAYMENT" text2="METHOD" />
+
+           
+          
+
+
+
+
           <div className="flex gap-3 flex-col lg:flex-row mt-6">
             {/* Payment Methods */}
+             {/* Stripe Payment Option */}
+             <div
+              onClick={() => setMethod('stripe')}
+              className={`flex items-center gap-3 border rounded-md p-3 cursor-pointer ${method === 'stripe' ? 'border-black' : 'border-gray-300'
+                }`}
+            >
+              <p
+                className={`min-w-3.5 h-3.5 border rounded-full ${method === 'stripe' ? 'bg-black' : 'bg-transparent'
+                  }`}
+              ></p>
+              <img className='h-5 mx-4' src={assets.stripe_logo} alt="Stripe Logo" />
+              <p className='text-gray-500 text-sm font-medium'>Stripe</p>
+            </div>
+
+            {/* Razorpay Payment Option */}
+            <div
+              onClick={() => setMethod('razorpay')}
+              className={`flex items-center gap-3 border rounded-md p-3 cursor-pointer ${method === 'razorpay' ? 'border-black' : 'border-gray-300'
+                }`}
+            >
+              <p
+                className={`min-w-3.5 h-3.5 border rounded-full ${method === 'razorpay' ? 'bg-black' : 'bg-transparent'
+                  }`}
+              ></p>
+              <img className='h-5 mx-4' src={assets.razorpay_logo} alt="Razorpay Logo" />
+              <p className='text-gray-500 text-sm font-medium'>Razorpay</p>
+            </div>
+
+            {/* Cash on Delivery Option */}
+            <div
+              onClick={() => setMethod('cod')}
+              className={`flex items-center gap-3 border rounded-md p-3 cursor-pointer ${method === 'cod' ? 'border-black' : 'border-gray-300'
+                }`}
+            >
+              <p
+                className={`min-w-3.5 h-3.5 border rounded-full ${method === 'cod' ? 'bg-black' : 'bg-transparent'
+                  }`}
+              ></p>
+              <p className='text-gray-500 text-sm font-medium mx-4'>Cash on Delivery</p>
+            </div>
           </div>
           <div className="w-full text-end mt-8">
             <button type="submit" className="bg-black text-white py-2 px-6 rounded-md">
