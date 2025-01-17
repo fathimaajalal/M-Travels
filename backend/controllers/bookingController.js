@@ -1,30 +1,39 @@
 import bookingModel from "../models/bookingModel.js";
+import userModel from '../models/userModel.js'
+import razorpay from 'razorpay'
+import Stripe from 'stripe'
+import crypto from 'crypto';
+import { log } from "console";
 
-// booking by cod
+const currency = 'INR';
+
+// gateway initialize
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+
+const razorpayInstance = new razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
+
+// booking by poa
 const bookVehicle = async(req,res) => {
     try {
-        const {userId, vehicle, amount, image, bookDate} = req.body;
-        // const {userId, vehicle, amount} = req.body;
-        // const bookingData = {
-        //     userId,
-        //     vehicle,
-        //     amount,
-        //     paymentMethod:"COD",
-        //     payment: false,
-        //     image,
-        //     bookDate,
-        //     date: Date.now()
-        // }
-
+        const {userId, vehicle, firstName,lastName, phone, amount, image, bookDate, fromStop, toStop} = req.body;
         const bookingData = {
             userId,
+            firstName,
+            lastName,
+            phone,
             vehicle,
             amount,
             paymentMethod: "COD",
             payment: false,
             image,
             bookDate: new Date(bookDate), // Convert to Date object
-            date: Date.now()
+            date: Date.now(),
+            fromStop,
+            toStop
         };
         
 
@@ -33,6 +42,7 @@ const bookVehicle = async(req,res) => {
 
         res.json({success:true, message:"Booking Successful"})
 
+
     } catch (error) {
         console.log(error);
         res.json({success:false, message:error.message})
@@ -40,18 +50,174 @@ const bookVehicle = async(req,res) => {
 }
 
 // booking by Stripe
-const bookVehicleStripe = async(req,res) => {
-    
-}
+// Stripe Payment
+const bookVehicleStripe = async(req, res) => {
+    try {
+        const { userId, vehicle, firstName, lastName, phone, amount, image, bookDate } = req.body;
 
-// booking by Razor Pay
-const bookVehicleRazorPay = async(req,res) => {
-    
-}
+        // Create a Stripe checkout session
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            line_items: [
+                {
+                    price_data: {
+                        currency: 'INR',
+                        product_data: {
+                            name: vehicle,
+                            images: [image],
+                        },
+                        unit_amount: amount * 100, // Stripe expects amount in paise (smallest unit)
+                    },
+                    quantity: 1,
+                },
+            ],
+            mode: 'payment',
+            success_url: `${process.env.FRONTEND_URL}/booking/success`,
+            cancel_url: `${process.env.FRONTEND_URL}/booking/cancel`,
+            metadata: {
+                userId,
+                vehicle,
+                firstName,
+                lastName,
+                phone,
+                bookDate,
+                stops,
+            },
+        });
+
+        // Save booking to the database with payment status as "Pending"
+        const bookingData = {
+            userId,
+            firstName,
+            lastName,
+            phone,
+            vehicle,
+            amount,
+            paymentMethod: 'Stripe',
+            payment: false,
+            image,
+            bookDate: new Date(bookDate),
+            date: Date.now(),
+            stops,
+        };
+        const newBooking = new bookingModel(bookingData);
+        await newBooking.save();
+
+        res.json({ success: true, sessionId: session.id });
+    } catch (error) {
+        console.error(error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
+const verifyStripe = async (req, res) => {
+    try {
+        const payload = req.body;
+        const sigHeader = req.headers['stripe-signature'];
+
+        let event;
+
+        try {
+            event = stripe.webhooks.constructEvent(payload, sigHeader, process.env.STRIPE_WEBHOOK_SECRET);
+        } catch (err) {
+            console.log('Webhook signature verification failed:', err);
+            return res.status(400).send('Webhook Error');
+        }
+
+        // Handle the event
+        if (event.type === 'checkout.session.completed') {
+            const session = event.data.object;
+            const bookingId = session.metadata.bookingId;
+
+            // Update booking status as 'Completed'
+            await bookingModel.findByIdAndUpdate(bookingId, { payment: true, paymentId: session.id });
+
+            // Respond with a success message
+            res.status(200).send('Payment Successful');
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Internal Server Error');
+    }
+};
+// Razorpay
+const bookVehicleRazorPay = async (req, res) => {
+    try {
+        const { userId, vehicle, firstName, lastName, phone, amount, image, bookDate, stops } = req.body;
+
+        // Create Razorpay order
+        const order = await razorpayInstance.orders.create({
+            amount: amount * 100, // Razorpay expects amount in paise
+            currency: currency,
+            receipt: `receipt_${Date.now()}`,
+            notes: { userId, vehicle, firstName, lastName, phone, bookDate, stops }, // Add stops to notes
+        });
+
+        // Save booking to the database with payment status as "Pending"
+        const bookingData = {
+            userId,
+            firstName,
+            lastName,
+            phone,
+            vehicle,
+            amount,
+            paymentMethod: 'Razorpay',
+            payment: false,
+            image,
+            bookDate: new Date(bookDate),
+            date: Date.now(),
+            orderId: order.id,
+            stops, // Add stops to the booking data
+        };
+
+        const newBooking = new bookingModel(bookingData);
+        await newBooking.save();
+
+        res.json({ success: true, orderId: order.id, key: process.env.RAZORPAY_KEY_ID });
+    } catch (error) {
+        console.error(error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
+const verifyRazorpay = async (req, res) => {
+    try {
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+        const body = razorpay_order_id + "|" + razorpay_payment_id;
+        const generated_signature = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+            .update(body)
+            .digest('hex');
+
+        if (generated_signature === razorpay_signature) {
+            // Payment is successful
+            const booking = await bookingModel.findOne({ orderId: razorpay_order_id });
+            if (!booking) {
+                return res.status(404).send('Booking not found');
+            }
+
+            await bookingModel.findByIdAndUpdate(booking._id, { payment: true, paymentId: razorpay_payment_id });
+
+            res.json({ success: true, message: 'Payment Verified' });
+        } else {
+            res.status(400).send('Payment verification failed');
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Internal Server Error');
+    }
+};
 
 // All bookings for admin panel
 const allBookings = async(req,res) => {
-    
+    try {
+
+        const bookings = await bookingModel.find({})
+        res.json({success:true,bookings})
+
+    } catch (error) {
+        console.log(error);
+        res.json({success:false, message:error.message})
+    }
 }
 
 // frontend booking data
@@ -73,7 +239,19 @@ const userBookings = async(req,res) => {
 
 // update booking status from Admin Panel
 const updateStatus = async(req,res) => {
+
+    try {
+        const { bookingId, status } = req.body;
+        
+        await bookingModel.findByIdAndUpdate(bookingId,{status})
+        res.json({success:true, message:'Status Updated'})
+
+
+    } catch (error) {
+        console.log(error);
+        res.json({success:false, message:error.message})
+    }
     
 }
 
-export {bookVehicle, bookVehicleRazorPay, bookVehicleStripe, allBookings, userBookings, updateStatus}
+export {verifyStripe,verifyRazorpay, bookVehicle, bookVehicleRazorPay, bookVehicleStripe, allBookings, userBookings, updateStatus}

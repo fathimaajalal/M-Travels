@@ -21,7 +21,7 @@ const Update = ({ token }) => {
         image2: null,
         image3: null,
         image4: null,
-        stops: [{ stopName: '', priceToNextStop: '' }], // Initialize with one stop
+        // stops: []
     })
 
     const fetchList = async () => {
@@ -62,29 +62,20 @@ const Update = ({ token }) => {
     }
 
     const handleStopChange = (index, e) => {
-        const { name, value } = e.target
-        const updatedStops = [...updatedDetails.stops]
-        updatedStops[index][name] = value
+        const newStops = [...updatedDetails.stops]; // Clone the stops array
+        newStops[index] = e.target.value; // Update the specific stop
         setUpdatedDetails(prevState => ({
             ...prevState,
-            stops: updatedStops,
-        }))
-    }
+            stops: newStops,
+        }));
+    };
 
     const handleAddStop = () => {
         setUpdatedDetails(prevState => ({
             ...prevState,
-            stops: [...prevState.stops, { stopName: '', priceToNextStop: '' }],
-        }))
-    }
-
-    const handleRemoveStop = (index) => {
-        const updatedStops = updatedDetails.stops.filter((_, i) => i !== index)
-        setUpdatedDetails(prevState => ({
-            ...prevState,
-            stops: updatedStops,
-        }))
-    }
+            stops: [...prevState.stops, ''], // Add an empty stop field
+        }));
+    };
 
     const handleImageChange = (e, imageNumber) => {
         const file = e.target.files[0];
@@ -116,10 +107,9 @@ const Update = ({ token }) => {
             formData.append('totalSeats', updatedDetails.totalSeats);
             formData.append('seating', updatedDetails.seating);
 
-            // Append stops
+            // Add stops to FormData
             updatedDetails.stops.forEach((stop, index) => {
-                formData.append(`stops[${index}][stopName]`, stop.stopName);
-                formData.append(`stops[${index}][priceToNextStop]`, stop.priceToNextStop);
+                formData.append(`stops[${index}]`, stop);
             });
 
             // Add files to FormData
@@ -302,49 +292,44 @@ const Update = ({ token }) => {
                             
 
                             {/* Stops Section */}
-                            <div className="space-y-4">
-                                <h3 className="text-lg font-semibold">Stops</h3>
-                                {updatedDetails.stops.map((stop, index) => (
-                                    <div key={index} className="grid grid-cols-2 gap-4">
-                                        <div className="flex flex-col">
-                                            <span className="text-sm font-medium mb-1">Stop Name:</span>
-                                            <input
-                                                type="text"
-                                                name="stopName"
-                                                value={stop.stopName}
-                                                onChange={(e) => handleStopChange(index, e)}
-                                                className="border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                required
-                                            />
-                                        </div>
-                                        <div className="flex flex-col">
-                                            <span className="text-sm font-medium mb-1">Price to Next Stop:</span>
-                                            <input
-                                                type="number"
-                                                name="priceToNextStop"
-                                                value={stop.priceToNextStop}
-                                                onChange={(e) => handleStopChange(index, e)}
-                                                className="border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                required
-                                            />
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleRemoveStop(index)}
-                                            className="text-red-600 text-sm mt-2"
-                                        >
-                                            Remove Stop
-                                        </button>
-                                    </div>
-                                ))}
-                                <button
-                                    type="button"
-                                    onClick={handleAddStop}
-                                    className="text-blue-600 text-sm"
-                                >
-                                    Add Stop
-                                </button>
-                            </div>
+<div className="space-y-4">
+    {updatedDetails.stops.map((stop, index) => (
+        <div key={index} className="flex gap-2">
+            <input
+                type="text"
+                value={stop}
+                onChange={(e) => handleStopChange(index, e)}
+                className="border rounded-md p-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter stop name"
+            />
+            {updatedDetails.stops.length > 1 && (
+                <button
+                    type="button"
+                    onClick={() => {
+                        const newStops = [...updatedDetails.stops];
+                        newStops.splice(index, 1); // Remove stop at index
+                        setUpdatedDetails(prevState => ({
+                            ...prevState,
+                            stops: newStops,
+                        }));
+                    }}
+                    className="text-red-600 text-sm"
+                >
+                    Remove
+                </button>
+            )}
+        </div>
+    ))}
+
+    <button
+        type="button"
+        onClick={handleAddStop}
+        className="text-blue-600 text-sm"
+    >
+        Add Stop
+    </button>
+</div>
+
 
                             {/* Submit Button */}
                             <div className="flex justify-end gap-4 mt-6">

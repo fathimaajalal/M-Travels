@@ -62,10 +62,15 @@ const BusRoute = () => {
             <img src={assets.star_dull} className="w-3 5" alt="" />
             <p className="text-sm pl-2">(23)</p>
           </div>
-          <p className="mt-5 text-3xl font-medium">
-            {currency}
-            {routeData.price}
-          </p>
+
+          {/* Conditional display for price */}
+          {routeData.category !== 'Regular' && (
+            <p className="mt-5 text-3xl font-medium">
+              {currency}
+              {routeData.price}
+            </p>
+          )}
+
           <p className="mt-5 text-gray-500 md:w-4/5">{routeData.description}</p>
 
           {/* Conditional Details for Buses */}

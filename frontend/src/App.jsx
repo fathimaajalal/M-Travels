@@ -12,12 +12,13 @@ import Bookings from './pages/Bookings'
 import NavBar from './components/NavBar'
 import Footer from './components/Footer'
 import SearchBar from './components/SearchBar'
+import Verify from './pages/Verify'
 // import { ToastContainer } from 'react-toastify';
 
 const App = () => {
   return (
     <div className='px-4 sm:px-[5vw] md:px-[7vw] lg:px-[9vw]'>
-     
+     {/* <ToastContainer /> */}
       <NavBar />
       <SearchBar />
       <Routes>
@@ -30,8 +31,9 @@ const App = () => {
         <Route path ='/login' element={<Login />}/>
         <Route path ='/book-ticket' element={<BookTicket />}/>
         <Route path ='/bookings' element={<Bookings />}/>
+        <Route path ='/verify' element={<Verify />}/>
       </Routes>
-      {/* <ToastContainer /> */}
+      
       <Footer />
     </div>
   )

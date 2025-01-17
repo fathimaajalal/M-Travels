@@ -33,7 +33,7 @@ const addVehicle = async (req, res) => {
           availableSeats: Number(availableSeats),
           totalSeats: Number(totalSeats),
           seating,
-          stops: stops || [],  // Ensure stops are included
+      // stops
           image: imagesUrl,
           date: Date.now()
       };
@@ -87,70 +87,29 @@ const singleVehicle = async(req,res) => {
         res.json({success:false, message:error.message})
     }
 }
-
-// update vehicle
-// const updateVehicle = async (req, res) => {
-//     try {
-//       const { id, name, description, price, category, departureTime, arrivalTime, availableSeats, totalSeats, seating } = req.body
-  
-//       const updatedVehicle = await busRouteModel.findByIdAndUpdate(
-//         id,
-//         {
-//           name,
-//           description,
-//           price,
-//           category,
-//           departureTime,
-//           arrivalTime,
-//           availableSeats,
-//           totalSeats,
-//           seating,
-//         },
-//         { new: true }
-//       )
-  
-//       res.json({ success: true, message: "Vehicle updated successfully", vehicle: updatedVehicle })
-//     } catch (error) {
-//       console.log(error)
-//       res.json({ success: false, message: error.message })
-//     }
-//   }
 const updateVehicle = async (req, res) => {
   try {
     const {
-      id,
-      name,
-      description,
-      price,
-      category,
-      departureTime,
-      arrivalTime,
-      availableSeats,
-      totalSeats,
-      seating,
+      id, name, description, price, category, departureTime, arrivalTime, availableSeats, totalSeats, seating, stops
     } = req.body;
 
     // Handle updated images if provided
-    const image1 = req.files?.image1 && req.files.image1[0];
-    const image2 = req.files?.image2 && req.files.image2[0];
-    const image3 = req.files?.image3 && req.files.image3[0];
-    const image4 = req.files?.image4 && req.files.image4[0];
-
-    const images = [image1, image2, image3, image4].filter((item) => item !== undefined);
-
+    const images = ['image1', 'image2', 'image3', 'image4'].map(imageField => req.files?.[imageField]?.[0]).filter(Boolean);
     let imagesUrl = [];
     if (images.length > 0) {
-      imagesUrl = await Promise.all(
-        images.map(async (item) => {
-          const result = await cloudinary.uploader.upload(item.path, { resource_type: "image" });
-          return result.secure_url;
-        })
-      );
+      imagesUrl = await Promise.all(images.map(async (item) => {
+        const result = await cloudinary.uploader.upload(item.path, { resource_type: "image" });
+        return result.secure_url;
+      }));
     }
 
     // Find the vehicle and update its details
     const vehicle = await busRouteModel.findById(id);
+    if (!vehicle) {
+      return res.status(404).json({ success: false, message: "Vehicle not found" });
+    }
 
+    // Update vehicle data
     const updatedVehicle = await busRouteModel.findByIdAndUpdate(
       id,
       {
@@ -164,14 +123,16 @@ const updateVehicle = async (req, res) => {
         totalSeats,
         seating,
         image: imagesUrl.length > 0 ? imagesUrl : vehicle.image, // Update images only if new ones are provided
+        stops
       },
       { new: true }
     );
 
     res.json({ success: true, message: "Vehicle updated successfully", vehicle: updatedVehicle });
   } catch (error) {
-    console.log(error);
-    res.json({ success: false, message: error.message });
+    console.error("Error updating vehicle:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
+
 export { listVehicle, addVehicle, removeVehicle, singleVehicle, updateVehicle }
