@@ -3,7 +3,6 @@ import userModel from '../models/userModel.js'
 import razorpay from 'razorpay'
 import Stripe from 'stripe'
 import crypto from 'crypto';
-import { log } from "console";
 
 const currency = 'INR';
 
