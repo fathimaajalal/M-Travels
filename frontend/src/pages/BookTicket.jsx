@@ -35,6 +35,7 @@ const BookTicket = () => {
     }
   }, [location.state, busRoutes]);
 
+
   // Update price based on selected stops
   useEffect(() => {
     if (fromStop && toStop) {
@@ -50,129 +51,126 @@ const BookTicket = () => {
     }
   }, [fromStop, toStop, busRoutes, location.state?.routeId]);
 
+
+
+
+  const onPaymentSuccess = (data) => {
+    if (data.success) {
+      toast.success(data.message);
+      navigate(data.redirectUrl); // Redirect to the bookings page
+    } else {
+      toast.error("Payment failed. Please try again.");
+    }
+  };
+  
+  // Inside the frontend handler for Stripe success URL:
+  useEffect(() => {
+      const sessionId = new URLSearchParams(window.location.search).get('session_id');
+      if (sessionId) {
+          axios.post(`${backendUrl}/verify/stripe`, { session_id: sessionId })
+              .then((response) => onPaymentSuccess(response.data))
+              .catch((error) => console.error(error));
+      }
+  }, []);
+
+
+
   const onChangeHandler = (event) => {
     const name = event.target.name;
     const value = event.target.value;
 
     setFormData((data) => ({ ...data, [name]: value }));
   };
+const onSubmitHandler = async (event) => {
+  event.preventDefault();
 
-  const onSubmitHandler = async (event) => {
-    event.preventDefault();
+  try {
+    let bookItem = null;
+    const { routeId } = location.state || {};
+    if (!routeId) {
+      toast.error("Invalid route. Please select again.");
+      return;
+    }
 
-    try {
-      let bookItem = null;
-
-      const { routeId } = location.state || {};
-      if (!routeId) {
-        toast.error("Invalid route. Please select again.");
-        return;
-      }
-
-      // Find the selected route based on `routeId`
-      busRoutes.forEach((item) => {
-        if (item._id === routeId) {
-          const itemInfo = structuredClone(item);
-          if (itemInfo) {
-            itemInfo.bookDate = formData.bookDate;
-            itemInfo.fromStop = fromStop;
-            itemInfo.toStop = toStop;
-            itemInfo.price = price;
-            bookItem = itemInfo;
-          }
+    // Find the selected route based on `routeId`
+    busRoutes.forEach((item) => {
+      if (item._id === routeId) {
+        const itemInfo = structuredClone(item);
+        if (itemInfo) {
+          itemInfo.bookDate = formData.bookDate;
+          itemInfo.fromStop = fromStop;
+          itemInfo.toStop = toStop;
+          itemInfo.price = price;
+          bookItem = itemInfo;
         }
-      });
-
-      if (!bookItem) {
-        toast.error("Invalid route selected.");
-        return;
       }
+    });
 
-      let bookingData = {
-        userId: token.userId,
-        vehicle: bookItem.name,
-        price: bookItem.price,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        phone: formData.phone,
-        image: bookItem.image[0],
-        amount: bookItem.price,
-        bookDate: formData.bookDate, // Send as string
-        fromStop: fromStop,
-        toStop: toStop
-      };
+    if (!bookItem) {
+      toast.error("Invalid route selected.");
+      return;
+    }
 
-      // Process payment and booking submission
-      switch (method) {
-        case "cod":
-          const response = await axios.post(
-            `${backendUrl}/api/booking/book`,
-            bookingData,
-            { headers: { token } }
-          );
-          if (response.data.success) {
-            navigate("/bookings");
-          } else {
-            console.log('Booking failed');
-          }
-          break;
+    let bookingData = {
+      userId: token.userId,
+      vehicle: bookItem.name,
+      price: bookItem.price,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      phone: formData.phone,
+      image: bookItem.image[0],
+      amount: bookItem.price,
+      bookDate: formData.bookDate, // Send as string
+      fromStop: fromStop,
+      toStop: toStop
+    };
+
+    // Process payment and booking submission
+    switch (method) {
+      case "cod":
+        const response = await axios.post(
+          `${backendUrl}/api/booking/book`,
+          bookingData,
+          { headers: { token } }
+        );
+        if (response.data.success) {
+          navigate("/bookings");
+        } else {
+          toast.error('Booking failed');
+        }
+        break;
 
         case 'stripe':
           const stripeResponse = await axios.post(
-            `${backendUrl}/api/booking/stripe`,
-            bookingData,
-            { headers: { token } }
+              `${backendUrl}/api/booking/stripe`,
+              bookingData,
+              { headers: { token } }
           );
           if (stripeResponse.data.success) {
-            const { sessionId } = stripeResponse.data;
-            const stripe = window.Stripe(process.env.STRIPE_PUBLIC_KEY);
-            stripe.redirectToCheckout({ sessionId });
+              const { sessionId } = stripeResponse.data;
+              const stripe = window.Stripe('pk_test_51QgVPICFAXPrvo46GXH4TFBlnuMBFRDqPw7kNhoAtH2DW34CbX5DqLZ1KBJhmdIMUo0Ph8ZyqsmkvEJ8zs1yqSFD00fEIqCDq0'); // Use environment variable
+              stripe.redirectToCheckout({ sessionId })
+                  .then((result) => {
+                      if (result.error) {
+                          toast.error(result.error.message);
+                      }
+                  });
+          } else {
+              toast.error('Stripe session creation failed');
           }
           break;
+      
 
-        case 'razorpay':
-          const razorpayResponse = await axios.post(
-            `${backendUrl}/api/booking/razorpay`,
-            bookingData,
-            { headers: { token } }
-          );
-          if (razorpayResponse.data.success) {
-            const { orderId, key } = razorpayResponse.data;
-            const options = {
-              key,
-              amount: bookingData.amount * 100, // in paise
-              currency: '₹',
-              name: 'Booking Payment',
-              description: 'Booking Payment for Vehicle',
-              order_id: orderId,
-              handler: function(response) {
-                const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = response;
-                axios.post(
-                  `${backendUrl}/api/booking/verifyRazorpay`,
-                  { razorpay_payment_id, razorpay_order_id, razorpay_signature },
-                  { headers: { token } }
-                );
-                navigate("/bookings");
-              },
-              prefill: {
-                name: `${formData.firstName} ${formData.lastName}`,
-                email: formData.email,
-                contact: formData.phone
-              }
-            };
-            const rzp1 = new window.Razorpay(options);
-            rzp1.open();
-          }
-          break;
-
-        default:
-          break;
-      }
-    } catch (error) {
-      console.error("Error during booking:", error);
-      toast.error(error.message);
+      // Razorpay part omitted for now
+      default:
+        break;
     }
-  };
+  } catch (error) {
+    console.error("Error during booking:", error);
+    toast.error(error.message);
+  }
+};
+
 
   return (
     <form onSubmit={onSubmitHandler} className="flex flex-col sm:flex-row justify-between gap-4 pt-5 sm:pt-14 min-h-screen">

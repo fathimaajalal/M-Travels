@@ -3,12 +3,13 @@ import userModel from '../models/userModel.js'
 import razorpay from 'razorpay'
 import Stripe from 'stripe'
 import crypto from 'crypto';
+import { log } from "console";
 
 const currency = 'INR';
 
 // gateway initialize
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_51QgVPICFAXPrvo468mqr2TNx7HY1rdpxhCVO5vmQQ8x9XxDUI3n3HdCAyZUlDP5jP72aKlic2BpxrTFRIGsQdIHx003gQEOB8C')
 
 const razorpayInstance = new razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
@@ -50,9 +51,9 @@ const bookVehicle = async(req,res) => {
 
 // booking by Stripe
 // Stripe Payment
-const bookVehicleStripe = async(req, res) => {
+const bookVehicleStripe = async (req, res) => {
     try {
-        const { userId, vehicle, firstName, lastName, phone, amount, image, bookDate } = req.body;
+        const { userId, vehicle, firstName, lastName, phone, amount, image, bookDate, fromStop, toStop } = req.body;
 
         // Create a Stripe checkout session
         const session = await stripe.checkout.sessions.create({
@@ -65,55 +66,32 @@ const bookVehicleStripe = async(req, res) => {
                             name: vehicle,
                             images: [image],
                         },
-                        unit_amount: amount * 100, // Stripe expects amount in paise (smallest unit)
+                        unit_amount: amount * 100, // Stripe expects amount in paise
                     },
                     quantity: 1,
                 },
             ],
             mode: 'payment',
-            success_url: `${process.env.FRONTEND_URL}/booking/success`,
+            success_url: `${process.env.FRONTEND_URL}/booking/success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${process.env.FRONTEND_URL}/booking/cancel`,
-            metadata: {
-                userId,
-                vehicle,
-                firstName,
-                lastName,
-                phone,
-                bookDate,
-                stops,
-            },
         });
 
-        // Save booking to the database with payment status as "Pending"
-        const bookingData = {
-            userId,
-            firstName,
-            lastName,
-            phone,
-            vehicle,
-            amount,
-            paymentMethod: 'Stripe',
-            payment: false,
-            image,
-            bookDate: new Date(bookDate),
-            date: Date.now(),
-            stops,
-        };
-        const newBooking = new bookingModel(bookingData);
-        await newBooking.save();
-
+        // Send the session ID to the frontend to redirect to Stripe's checkout page
         res.json({ success: true, sessionId: session.id });
+
     } catch (error) {
-        console.error(error);
+        console.log("Error creating Stripe session: ", error);
         res.json({ success: false, message: error.message });
     }
 };
 
+
+  
+// Inside verifyStripe
 const verifyStripe = async (req, res) => {
     try {
         const payload = req.body;
         const sigHeader = req.headers['stripe-signature'];
-
         let event;
 
         try {
@@ -123,22 +101,48 @@ const verifyStripe = async (req, res) => {
             return res.status(400).send('Webhook Error');
         }
 
-        // Handle the event
         if (event.type === 'checkout.session.completed') {
             const session = event.data.object;
             const bookingId = session.metadata.bookingId;
 
-            // Update booking status as 'Completed'
             await bookingModel.findByIdAndUpdate(bookingId, { payment: true, paymentId: session.id });
 
-            // Respond with a success message
-            res.status(200).send('Payment Successful');
+            // Respond with a success message and booking redirection
+            res.status(200).json({ success: true, message: 'Payment Successful', redirectUrl: `/bookings` });
         }
     } catch (error) {
         console.error(error);
         res.status(500).send('Internal Server Error');
     }
 };
+
+// Inside verifyRazorpay
+const verifyRazorpay = async (req, res) => {
+    try {
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+        const body = razorpay_order_id + "|" + razorpay_payment_id;
+        const generated_signature = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+            .update(body)
+            .digest('hex');
+
+        if (generated_signature === razorpay_signature) {
+            const booking = await bookingModel.findOne({ orderId: razorpay_order_id });
+            if (!booking) {
+                return res.status(404).send('Booking not found');
+            }
+
+            await bookingModel.findByIdAndUpdate(booking._id, { payment: true, paymentId: razorpay_payment_id });
+
+            res.json({ success: true, message: 'Payment Verified', redirectUrl: `/bookings` });
+        } else {
+            res.status(400).send('Payment verification failed');
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Internal Server Error');
+    }
+};
+
 // Razorpay
 const bookVehicleRazorPay = async (req, res) => {
     try {
@@ -176,33 +180,6 @@ const bookVehicleRazorPay = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.json({ success: false, message: error.message });
-    }
-};
-
-const verifyRazorpay = async (req, res) => {
-    try {
-        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
-        const body = razorpay_order_id + "|" + razorpay_payment_id;
-        const generated_signature = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
-            .update(body)
-            .digest('hex');
-
-        if (generated_signature === razorpay_signature) {
-            // Payment is successful
-            const booking = await bookingModel.findOne({ orderId: razorpay_order_id });
-            if (!booking) {
-                return res.status(404).send('Booking not found');
-            }
-
-            await bookingModel.findByIdAndUpdate(booking._id, { payment: true, paymentId: razorpay_payment_id });
-
-            res.json({ success: true, message: 'Payment Verified' });
-        } else {
-            res.status(400).send('Payment verification failed');
-        }
-    } catch (error) {
-        console.error(error);
-        res.status(500).send('Internal Server Error');
     }
 };
 
