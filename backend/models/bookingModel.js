@@ -15,6 +15,8 @@ const bookingSchema = new mongoose.Schema({
     date : { type: Date, required: true, default: Date.now },
     fromStop: {type: String},
     toStop: {type: String},
+    
+    email: {type: String},
 
 })
 

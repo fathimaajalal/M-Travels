@@ -1,5 +1,5 @@
 import express from 'express'
-import {bookVehicle, bookVehicleRazorPay, bookVehicleStripe, allBookings, userBookings, updateStatus, verifyStripe} from '../controllers/bookingController.js'
+import {bookVehicle, bookVehicleRazorPay, bookVehicleStripe, allBookings, userBookings, updateStatus, verifyStripe, cancelBooking, subscribeNewsletter} from '../controllers/bookingController.js'
 import adminAuth from '../middleware/adminAuth.js'
 import authUser from '../middleware/auth.js'
 
@@ -13,11 +13,13 @@ bookingRouter.post('/status',adminAuth,updateStatus)
 bookingRouter.post('/book',authUser,bookVehicle)
 bookingRouter.post('/stripe',authUser,bookVehicleStripe)
 bookingRouter.post('/razorpay',authUser,bookVehicleRazorPay)
+bookingRouter.post('/cancel',authUser,cancelBooking)
 
 // User Feature
 bookingRouter.post('/userbookings',authUser,userBookings)
+bookingRouter.post('/subscribe', authUser, subscribeNewsletter);
 
 // Verify Payment
-bookingRouter.post('/verifyStripe',authUser,verifyStripe)
+bookingRouter.post('/verifyStripe',authUser, verifyStripe)
 
 export default bookingRouter

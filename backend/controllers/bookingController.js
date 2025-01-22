@@ -254,4 +254,69 @@ const updateStatus = async(req,res) => {
     
 }
 
-export {verifyStripe,verifyRazorpay, bookVehicle, bookVehicleRazorPay, bookVehicleStripe, allBookings, userBookings, updateStatus}
+// Cancel Booking
+const cancelBooking = async (req, res) => {
+    try {
+        const { bookingId, paymentMethod, paymentId } = req.body;
+
+        const booking = await bookingModel.findById(bookingId);
+        if (!booking) {
+            return res.status(404).json({ success: false, message: "Booking not found" });
+        }
+
+        // Update the booking status to "Canceled"
+        await bookingModel.findByIdAndUpdate(bookingId, { status: "Canceled" });
+
+        // Handle refunds if necessary
+        if (paymentMethod === "Stripe" && booking.payment) {
+            await stripe.refunds.create({
+                payment_intent: paymentId,
+            });
+        } else if (paymentMethod === "Razorpay" && booking.payment) {
+            await razorpayInstance.payments.refund(paymentId, {
+                amount: booking.amount * 100, // Refund amount in paise
+            });
+        }
+
+        res.json({ success: true, message: "Booking canceled successfully" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "Failed to cancel booking" });
+    }
+};
+
+  
+  const subscribeNewsletter = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        // Check if the email is already registered in the database
+        const existingUser = await userModel.findOne({ email });
+
+        if (existingUser) {
+            // If the email is registered, notify the user
+            return res.json({ success: true, message: "You have already subscribed and are eligible for the discount.", discountCode: '' });
+        } else {
+            // If the email is not registered, create a new entry in the user model
+            const newUser = new userModel({ email });
+            await newUser.save();
+
+            // Generate a discount code
+            const discountCode = `DISCOUNT-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+
+            // Return the discount code to the user
+            return res.json({
+                success: true,
+                message: "Subscription successful! You are eligible for the discount.",
+                discountCode: discountCode
+            });
+        }
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
+  
+
+export {verifyStripe,verifyRazorpay, bookVehicle, bookVehicleRazorPay, bookVehicleStripe, allBookings, userBookings, updateStatus, cancelBooking, subscribeNewsletter}

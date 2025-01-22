@@ -311,7 +311,7 @@ const BookTicket = () => {
                 className={`min-w-3.5 h-3.5 border rounded-full ${method === 'cod' ? 'bg-black' : 'bg-transparent'
                   }`}
               ></p>
-              <p className='text-gray-500 text-sm font-medium mx-4'>Cash on Delivery</p>
+              <p className='text-gray-500 text-sm font-medium mx-4'>Pay on Arrival</p>
             </div>
           </div>
           <div className="w-full text-end mt-8">

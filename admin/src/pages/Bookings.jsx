@@ -89,6 +89,7 @@ const Bookings = ({ token }) => {
                       <option value="Booking Successful">Booking Successful</option>
                       <option value="On the way">On the way</option>
                       <option value="Reached">Reached</option>
+                      <option value="Canceled">Canceled</option>
                     </select>
 
                     {/* Conditionally render from and to stops if available */}
