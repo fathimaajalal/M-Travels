@@ -11,15 +11,16 @@ bookingRouter.post('/status',adminAuth,updateStatus)
 
 // Payment Features
 bookingRouter.post('/book',authUser,bookVehicle)
-bookingRouter.post('/stripe',authUser,bookVehicleStripe)
+bookingRouter.post('/stripe', authUser, bookVehicleStripe);
+// bookingRouter.post('/verifyStripe', authUser, verifyStripe);
+bookingRouter.post('/verifyStripe', authUser, verifyStripe);
+
+
 bookingRouter.post('/razorpay',authUser,bookVehicleRazorPay)
 bookingRouter.post('/cancel',authUser,cancelBooking)
 
 // User Feature
 bookingRouter.post('/userbookings',authUser,userBookings)
 bookingRouter.post('/subscribe', authUser, subscribeNewsletter);
-
-// Verify Payment
-bookingRouter.post('/verifyStripe',authUser, verifyStripe)
 
 export default bookingRouter

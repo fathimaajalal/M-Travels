@@ -4,6 +4,7 @@ import Title from '../components/Title';
 import axios from 'axios';
 
 const Bookings = () => {
+
   const { backendUrl, token, currency } = useContext(BookContext);
   const [bookingData, setBookingData] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -22,8 +23,10 @@ const Bookings = () => {
       );
 
       if (response.data.success) {
-        let allBookingsItem = [];
-        response.data.bookings.map((booking) => {
+
+         let allBookingsItem = [];
+         response.data.bookings.map((booking) => {
+
           booking['status'] = booking.status;
           booking['payment'] = booking.payment;
           booking['paymentMethod'] = booking.paymentMethod;
@@ -43,6 +46,49 @@ const Bookings = () => {
       }
     } catch (error) {
       console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get("session_id");
+
+    if (sessionId) {
+      verifyStripe(sessionId);
+    }
+  }, []);
+
+
+  // Example: Sending session_id to backend for verification
+  const verifyStripe = async (sessionId) => {
+    try {
+      const token = localStorage.getItem('token'); // Adjust this based on where you're storing the token
+      console.log('token',token);
+      // Check if token is missing
+      if (!token) {
+        console.error('Token is missing. Please log in again.');
+        return;
+      }
+
+      const response = await axios.post(
+        backendUrl + '/api/booking/verifyStripe',
+        { sessionId },
+        { headers: { token } }
+      );
+
+      await axios.post(
+        backendUrl + '/api/booking/userbookings',
+        {},
+        
+      );
+
+      if (response.data.success) {
+        console.log('Payment verified and booking saved:', response.data.message);
+      } else {
+        console.error('Verification failed:', response.data.message);
+      }
+    } catch (error) {
+      console.error('Error verifying payment:', error);
     }
   };
 
@@ -108,11 +154,11 @@ const Bookings = () => {
                     <span className="text-gray-400">
                       {item.bookDate
                         ? new Date(item.bookDate).toLocaleDateString('en-US', {
-                            weekday: 'short',
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                          })
+                          weekday: 'short',
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                        })
                         : 'N/A'}
                     </span>
                   </p>
@@ -143,9 +189,8 @@ const Bookings = () => {
               {/* Status */}
               <div className="flex items-center gap-2">
                 <p
-                  className={`min-w-2 h-2 rounded-full ${
-                    item.status === 'Cancelled' ? 'bg-gray-500' : 'bg-green-500'
-                  }`}
+                  className={`min-w-2 h-2 rounded-full ${item.status === 'Cancelled' ? 'bg-gray-500' : 'bg-green-500'
+                    }`}
                 ></p>
                 <p className="text-sm md:text-base">{item.status || 'Pending'}</p>
               </div>

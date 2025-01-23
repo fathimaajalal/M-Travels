@@ -4,13 +4,12 @@ import razorpay from 'razorpay'
 import Stripe from 'stripe'
 import crypto from 'crypto';
 import { log } from "console";
+import stripePackage from 'stripe';
 
 const currency = 'INR';
 
 // gateway initialize
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_51QgVPICFAXPrvo468mqr2TNx7HY1rdpxhCVO5vmQQ8x9XxDUI3n3HdCAyZUlDP5jP72aKlic2BpxrTFRIGsQdIHx003gQEOB8C')
-
+const stripe = stripePackage(process.env.STRIPE_SECRET_KEY || 'sk_test_51QgVPICFAXPrvo468mqr2TNx7HY1rdpxhCVO5vmQQ8x9XxDUI3n3HdCAyZUlDP5jP72aKlic2BpxrTFRIGsQdIHx003gQEOB8C');
 const razorpayInstance = new razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
     key_secret: process.env.RAZORPAY_KEY_SECRET,
@@ -49,11 +48,15 @@ const bookVehicle = async(req,res) => {
     }
 }
 
-// booking by Stripe
-// Stripe Payment
+// Book Vehicle and Create Stripe Session
 const bookVehicleStripe = async (req, res) => {
     try {
         const { userId, vehicle, firstName, lastName, phone, amount, image, bookDate, fromStop, toStop } = req.body;
+
+        const validBookDate = new Date(bookDate);
+        if (isNaN(validBookDate)) {
+            return res.status(400).json({ success: false, message: 'Invalid book date format' });
+        }
 
         // Create a Stripe checkout session
         const session = await stripe.checkout.sessions.create({
@@ -74,45 +77,95 @@ const bookVehicleStripe = async (req, res) => {
             mode: 'payment',
             success_url: `${process.env.FRONTEND_URL}/booking/success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${process.env.FRONTEND_URL}/booking/cancel`,
+            metadata: {
+
+                firstName,
+                lastName,
+                phone,
+                paymentMethod: "Stripe" || "stripe",
+        
+
+                userId,
+                vehicle,
+                bookDate,
+                fromStop,
+                toStop,
+
+                image,
+                
+                // bookDate: new Date(bookDate), // Convert to Date object
+                bookDate: validBookDate.toISOString(),
+                date: Date.now(),
+                fromStop,
+                toStop
+            },
         });
 
         // Send the session ID to the frontend to redirect to Stripe's checkout page
         res.json({ success: true, sessionId: session.id });
 
     } catch (error) {
-        console.log("Error creating Stripe session: ", error);
-        res.json({ success: false, message: error.message });
+        console.error("Error creating Stripe session:", error);
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 
-
-  
-// Inside verifyStripe
+// Verify Payment
 const verifyStripe = async (req, res) => {
+
+    console.log('inside verify stripe');
+
     try {
-        const payload = req.body;
-        const sigHeader = req.headers['stripe-signature'];
-        let event;
+        const { sessionId } = req.body;
 
-        try {
-            event = stripe.webhooks.constructEvent(payload, sigHeader, process.env.STRIPE_WEBHOOK_SECRET);
-        } catch (err) {
-            console.log('Webhook signature verification failed:', err);
-            return res.status(400).send('Webhook Error');
-        }
+        // Retrieve the session details from Stripe
+        const session = await stripe.checkout.sessions.retrieve(sessionId);
 
-        if (event.type === 'checkout.session.completed') {
-            const session = event.data.object;
-            const bookingId = session.metadata.bookingId;
+        if (session.payment_status === 'paid') {
 
-            await bookingModel.findByIdAndUpdate(bookingId, { payment: true, paymentId: session.id });
+            console.log('inside paid');
+            // Payment is successful; save the booking details in the database
+            const { userId, vehicle, firstName, lastName, phone, amount, image, bookDate, fromStop, toStop } = session.metadata;
 
-            // Respond with a success message and booking redirection
-            res.status(200).json({ success: true, message: 'Payment Successful', redirectUrl: `/bookings` });
+            const validBookDate = new Date(bookDate);
+            if (isNaN(validBookDate)) {
+                return res.status(400).json({ success: false, message: 'Invalid book date format from 2nd, verifyStripe' });
+            }
+
+            await bookingModel.create({
+
+                firstName,
+                lastName,
+                phone,
+
+                paymentMethod: "Stripe" || "stripe",
+        
+                userId,
+                vehicle,
+                bookDate,
+                fromStop,
+                toStop,
+                payment: true,
+                paymentId: session.id,
+                amount: session.amount_total / 100, // Convert back to original currency
+
+                image,
+                // bookDate: new Date(bookDate), // Convert to Date object
+
+                bookDate: validBookDate, 
+                // bookDate, 
+                date: Date.now(),
+                fromStop,
+                toStop
+            });
+
+            res.status(200).json({ success: true, message: 'Payment verified and booking saved' });
+        } else {
+            res.status(400).json({ success: false, message: 'Payment not completed' });
         }
     } catch (error) {
-        console.error(error);
-        res.status(500).send('Internal Server Error');
+        console.error("Error verifying payment:", error);
+        res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 };
 
@@ -295,4 +348,4 @@ const cancelBooking = async (req, res) => {
 
   
 
-export {verifyStripe,verifyRazorpay, bookVehicle, bookVehicleRazorPay, bookVehicleStripe, allBookings, userBookings, updateStatus, cancelBooking, subscribeNewsletter}
+export {verifyStripe, verifyRazorpay, bookVehicle, bookVehicleRazorPay, bookVehicleStripe, allBookings, userBookings, updateStatus, cancelBooking, subscribeNewsletter}
