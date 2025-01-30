@@ -10,13 +10,18 @@ const OurPolicy = () => {
           <img src={assets.cancel_icon} className="w-12 m-auto mb-5" alt="Cancel Icon" />
           <p className="font-semibold">Easy Cancellations</p>
           <p className="text-gray-400">Cancel your booking hassle-free at any time.</p>
+          <p className="text-gray-300">(Only for POA)</p>
         </div>
 
         {/* Customer Support Policy */}
         <div>
           <img src={assets.support_icon} className="w-12 m-auto mb-5" alt="Support Icon" />
           <p className="font-semibold">Customer Support</p>
-          <p className="text-gray-400">24/7 support to assist with any concerns or inquiries.</p>
+          <p className="text-gray-400">
+  Need help? Contact us via email or call—we’re here for you!
+</p>
+
+
         </div>
 
         {/* Secure Payments Policy */}

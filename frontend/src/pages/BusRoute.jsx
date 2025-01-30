@@ -8,7 +8,7 @@ const BusRoute = () => {
   const { busRoutes, currency } = useContext(BookContext);
   const [routeData, setRouteData] = useState(false);
   const [image, setImage] = useState('');
-  
+
   const fetchRouteData = async () => {
     busRoutes.map((item) => {
       if (item._id === routeId) {
@@ -21,11 +21,11 @@ const BusRoute = () => {
   };
 
   const navigate = useNavigate();
-  
+
   // Function to check if the user is logged in based on token
   const isUserLoggedIn = () => {
     const token = localStorage.getItem('token'); // or use context if storing token there
-    return token ? true : false; 
+    return token ? true : false;
   };
 
   const handleBookNow = (routeId) => {
@@ -36,7 +36,7 @@ const BusRoute = () => {
     }
     navigate('/book-ticket', { state: { routeId } });
   };
-  
+
   useEffect(() => {
     fetchRouteData();
   }, [routeId, busRoutes]);
@@ -90,36 +90,22 @@ const BusRoute = () => {
             <div className="mt-5 text-sm text-gray-600">
               <p>Departure Time: {routeData.departureTime || 'N/A'}</p>
               <p>Arrival Time: {routeData.arrivalTime || 'N/A'}</p>
-              {/* <p>Seating: {routeData.stops || 'Standard'}</p>  */}
 
-              <div>
-  <p>Stops: {routeData.stops && routeData.stops.length > 0 ? '' : 'Standard'}</p>
-  {routeData.stops && routeData.stops.length > 0 && (
-    <div className="stops-container">
-      {routeData.stops.map((stop, index) => (
-        <p key={index} className="stop-item">
-          {stop}
-        </p>
-      ))}
-    </div>
-  )}
-</div>
-
-              
-              {/* <p>
-                Seats: {routeData.availableSeats || 0} /{' '}
-                {routeData.totalSeats || 'N/A'}
-              </p>
-              <p>Seating: {routeData.seating || 'Standard'}</p> */}
-
-{/* <p>Seating: {routeData.stops || 'Standard'}</p> */}
-
-
+              <div className="flex flex-wrap gap-4 mt-4">
+                <p>Stops: {routeData.stops && routeData.stops.length > 0 ? '' : 'Standard'}</p>
+                {routeData.stops && routeData.stops.length > 0 && (
+                  <div className="stops-box sm:w-[88%] w-full p-4 border border-gray-300 rounded-lg">
+                    {routeData.stops.map((stop, index) => (
+                      <p key={index} className="stop-item">{stop}</p>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
           <br />
-          <button 
+          <button
             className="bg-black text-white px-8 py-3 text-sm active:bg-gray-700"
             onClick={() => handleBookNow(routeData._id)} // Now checks if user is logged in before proceeding
           >
@@ -146,14 +132,12 @@ const BusRoute = () => {
         {/* Description Content */}
         <div className="flex flex-col gap-4 border px-6 py-6 text-sm text-gray-500">
           <p>
-            An e-commerce website is an online platform that facilitates the
-            buying and selling of goods or services over the internet.
+            A travel website is an online platform that facilitates the planning and booking of trips, vacations, and travel-related services.
           </p>
           <p>
-            E-commerce websites typically display products or services along
-            with detailed descriptions, pricing, and user reviews, allowing
-            customers to make informed purchasing decisions.
+            Travel websites typically display destinations or travel packages along with detailed descriptions, pricing, and user reviews, allowing customers to make informed travel decisions.
           </p>
+
         </div>
       </div>
     </div>

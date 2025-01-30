@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom'
 import Home from './pages/Home'
 import Collection from './pages/Collection'
 import Contact from './pages/Contact'
+import Profile from './pages/Profile'
 import BusRoute from './pages/BusRoute'
 import Cart from './pages/Cart'
 import Login from './pages/Login'
@@ -31,6 +32,8 @@ const App = () => {
         <Route path ='/login' element={<Login />}/>
         <Route path ='/book-ticket' element={<BookTicket />}/>
         <Route path ='/bookings' element={<Bookings />}/>
+        <Route path ='/profile' element={<Profile />}/>
+
 
         <Route path="/booking/success" element={<Bookings />} />
 

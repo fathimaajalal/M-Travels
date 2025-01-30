@@ -16,9 +16,9 @@ const razorpayInstance = new razorpay({
 });
 
 // booking by poa
-const bookVehicle = async(req,res) => {
+const bookVehicle = async (req, res) => {
     try {
-        const {userId, vehicle, firstName,lastName, phone, amount, image, bookDate, fromStop, toStop} = req.body;
+        const { userId, vehicle, firstName, lastName, phone, amount, image, bookDate, fromStop, toStop } = req.body;
         const bookingData = {
             userId,
             firstName,
@@ -34,17 +34,17 @@ const bookVehicle = async(req,res) => {
             fromStop,
             toStop
         };
-        
+
 
         const newBooking = bookingModel(bookingData)
         await newBooking.save()
 
-        res.json({success:true, message:"Booking Successful"})
+        res.json({ success: true, message: "Booking Successful" })
 
 
     } catch (error) {
         console.log(error);
-        res.json({success:false, message:error.message})
+        res.json({ success: false, message: error.message })
     }
 }
 
@@ -83,7 +83,7 @@ const bookVehicleStripe = async (req, res) => {
                 lastName,
                 phone,
                 paymentMethod: "Stripe" || "stripe",
-        
+
 
                 userId,
                 vehicle,
@@ -92,7 +92,7 @@ const bookVehicleStripe = async (req, res) => {
                 toStop,
 
                 image,
-                
+
                 // bookDate: new Date(bookDate), // Convert to Date object
                 bookDate: validBookDate.toISOString(),
                 date: Date.now(),
@@ -139,7 +139,7 @@ const verifyStripe = async (req, res) => {
                 phone,
 
                 paymentMethod: "Stripe" || "stripe",
-        
+
                 userId,
                 vehicle,
                 bookDate,
@@ -152,7 +152,7 @@ const verifyStripe = async (req, res) => {
                 image,
                 // bookDate: new Date(bookDate), // Convert to Date object
 
-                bookDate: validBookDate, 
+                bookDate: validBookDate,
                 // bookDate, 
                 date: Date.now(),
                 fromStop,
@@ -170,6 +170,7 @@ const verifyStripe = async (req, res) => {
 };
 
 // Inside verifyRazorpay
+
 const verifyRazorpay = async (req, res) => {
     try {
         const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
@@ -196,17 +197,22 @@ const verifyRazorpay = async (req, res) => {
     }
 };
 
-// Razorpay
+
 const bookVehicleRazorPay = async (req, res) => {
     try {
-        const { userId, vehicle, firstName, lastName, phone, amount, image, bookDate, stops } = req.body;
+        const { userId, vehicle, firstName, lastName, phone, amount, image, bookDate, fromStop, toStop } = req.body;
+
+        const validBookDate = new Date(bookDate);
+        if (isNaN(validBookDate)) {
+            return res.status(400).json({ success: false, message: 'Invalid book date format' });
+        }
 
         // Create Razorpay order
         const order = await razorpayInstance.orders.create({
-            amount: amount * 100, // Razorpay expects amount in paise
-            currency: currency,
+            amount: amount * 100, // Amount in paise
+            currency: "INR",
             receipt: `receipt_${Date.now()}`,
-            notes: { userId, vehicle, firstName, lastName, phone, bookDate, stops }, // Add stops to notes
+            notes: { userId, vehicle, firstName, lastName, phone, amount, image, validBookDate, fromStop, toStop }, // Add stops to notes
         });
 
         // Save booking to the database with payment status as "Pending"
@@ -220,16 +226,21 @@ const bookVehicleRazorPay = async (req, res) => {
             paymentMethod: 'Razorpay',
             payment: false,
             image,
-            bookDate: new Date(bookDate),
             date: Date.now(),
             orderId: order.id,
-            stops, // Add stops to the booking data
+            bookDate: validBookDate.toISOString(),
+            fromStop,
+            toStop
         };
 
         const newBooking = new bookingModel(bookingData);
         await newBooking.save();
 
-        res.json({ success: true, orderId: order.id, key: process.env.RAZORPAY_KEY_ID });
+        res.json({
+            success: true,
+            orderId: order.id,
+            key: process.env.RAZORPAY_KEY_ID, // Send Razorpay key ID to frontend
+        });
     } catch (error) {
         console.error(error);
         res.json({ success: false, message: error.message });
@@ -237,50 +248,50 @@ const bookVehicleRazorPay = async (req, res) => {
 };
 
 // All bookings for admin panel
-const allBookings = async(req,res) => {
+const allBookings = async (req, res) => {
     try {
 
         const bookings = await bookingModel.find({})
-        res.json({success:true,bookings})
+        res.json({ success: true, bookings })
 
     } catch (error) {
         console.log(error);
-        res.json({success:false, message:error.message})
+        res.json({ success: false, message: error.message })
     }
 }
 
 // frontend booking data
-const userBookings = async(req,res) => {
+const userBookings = async (req, res) => {
 
     try {
-        
+
         const { userId } = req.body
 
-        const bookings = await bookingModel.find({userId})
-        res.json({success:true,bookings})
+        const bookings = await bookingModel.find({ userId })
+        res.json({ success: true, bookings })
 
     } catch (error) {
         console.log(error);
-        res.json({success:false, message:error.message})
+        res.json({ success: false, message: error.message })
     }
-    
+
 }
 
 // update booking status from Admin Panel
-const updateStatus = async(req,res) => {
+const updateStatus = async (req, res) => {
 
     try {
         const { bookingId, status } = req.body;
-        
-        await bookingModel.findByIdAndUpdate(bookingId,{status})
-        res.json({success:true, message:'Status Updated'})
+
+        await bookingModel.findByIdAndUpdate(bookingId, { status })
+        res.json({ success: true, message: 'Status Updated' })
 
 
     } catch (error) {
         console.log(error);
-        res.json({success:false, message:error.message})
+        res.json({ success: false, message: error.message })
     }
-    
+
 }
 
 // Cancel Booking
@@ -314,8 +325,8 @@ const cancelBooking = async (req, res) => {
     }
 };
 
-  
-  const subscribeNewsletter = async (req, res) => {
+
+const subscribeNewsletter = async (req, res) => {
     try {
         const { email } = req.body;
 
@@ -346,6 +357,6 @@ const cancelBooking = async (req, res) => {
     }
 };
 
-  
 
-export {verifyStripe, verifyRazorpay, bookVehicle, bookVehicleRazorPay, bookVehicleStripe, allBookings, userBookings, updateStatus, cancelBooking, subscribeNewsletter}
+
+export { verifyStripe, verifyRazorpay, bookVehicle, bookVehicleRazorPay, bookVehicleStripe, allBookings, userBookings, updateStatus, cancelBooking, subscribeNewsletter }

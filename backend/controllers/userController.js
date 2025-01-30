@@ -95,4 +95,92 @@ const adminLogin = async (req,res) => {
   }
 }
 
-export {loginUser, registerUser, adminLogin}
+
+// Import necessary modules
+const userProfile = async (req, res) => {
+  try {
+    const token = req.headers.token;
+    if (!token) {
+      return res.status(401).json({ success: false, message: "Unauthorized access" });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET); // Decode token to extract user ID
+    const userId = decoded.id; // Assuming token has `id`
+
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    res.json({ success: true, user });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+const editProfile = async (req, res) => {
+  try {
+    const token = req.headers.token;
+    if (!token) {
+      return res.status(401).json({ success: false, message: 'Unauthorized access' });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.id;
+
+    const { name, email, phone } = req.body;
+
+    const updatedUser = await userModel.findByIdAndUpdate(
+      userId,
+      { name, email, phone },
+      { new: true } // Return the updated document
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    res.json({ success: true, user: updatedUser });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+const changePassword = async (req, res) => {
+  try {
+    const token = req.headers.token;
+    if (!token) {
+      return res.status(401).json({ success: false, message: 'Unauthorized access' });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.id;
+
+    const { currentPassword, newPassword } = req.body;
+
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: 'Incorrect current password' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+
+    await user.save();
+
+    res.json({ success: true, message: 'Password updated successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// AISHAASHARAF123
+export {loginUser, registerUser, adminLogin, userProfile, editProfile, changePassword}

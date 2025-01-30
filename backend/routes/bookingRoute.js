@@ -12,7 +12,6 @@ bookingRouter.post('/status',adminAuth,updateStatus)
 // Payment Features
 bookingRouter.post('/book',authUser,bookVehicle)
 bookingRouter.post('/stripe', authUser, bookVehicleStripe);
-// bookingRouter.post('/verifyStripe', authUser, verifyStripe);
 bookingRouter.post('/verifyStripe', authUser, verifyStripe);
 
 
