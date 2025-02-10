@@ -2,7 +2,6 @@ import React, { useContext, useState } from 'react';
 import { BookContext } from '../context/BookContext';
 import axios from 'axios';
 
-
 const NewsletterBox = () => {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
@@ -29,10 +28,14 @@ const NewsletterBox = () => {
     }
 
     try {
-      const response = await axios.post(`${backendUrl}/api/booking/subscribe`, { headers: { token }} ,{ email }); // Use axios correctly
+      const response = await axios.post(
+        `${backendUrl}/api/booking/subscribe`,
+        { email },
+        { headers: { token } }
+      );
 
       const data = response.data; // Get the response data directly
-  
+
       if (data.success) {
         if (data.discountCode) {
           setMessage(data.message);

@@ -29,11 +29,14 @@ const Sidebar = () => {
     </NavLink>
 
     <NavLink className='flex items-center gap-3 border border-gray-300 border-r-0 px-3 py-2 rounded-1' to="/reports">
-      <img className='w-5 h-5' src={assets.book_icon} alt="" />
+      <img className='w-5 h-5' src={assets.report} alt="" />
       <p className='hidden md:block'>Reports</p>
     </NavLink>
 
-
+    <NavLink className='flex items-center gap-3 border border-gray-300 border-r-0 px-3 py-2 rounded-1' to="/users">
+  <img className='w-5 h-5' src={assets.profile_icon} alt="" />
+  <p className='hidden md:block'>Users</p>
+</NavLink>
 
   </div>
 </div>

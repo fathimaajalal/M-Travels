@@ -10,6 +10,7 @@ import Login from './components/Login'
 import Update from './pages/Update' 
 import { ToastContainer } from 'react-toastify';
 import Reports from './pages/Reports'
+import UserList from './pages/UserList'
 
 export const backendUrl = import.meta.env.VITE_BACKEND_URL
 export const currency = '₹';
@@ -39,7 +40,8 @@ const App = () => {
                 <Route path='/bookings' element={<Bookings token={token} />} />
                 <Route path='/update' element={<Update token={token} />} />
                 <Route path="/reports" element={<Reports token={token} />} />
-              </Routes>
+                <Route path="/users" element={<UserList token={token} />} />
+                              </Routes>
             </div>
           </div>
         </>

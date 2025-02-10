@@ -2,9 +2,11 @@ import bookingModel from "../models/bookingModel.js";
 import userModel from '../models/userModel.js'
 import razorpay from 'razorpay'
 import Stripe from 'stripe'
-import crypto from 'crypto';
 import { log } from "console";
 import stripePackage from 'stripe';
+import NewsletterModel from '../models/newsletterModel.js'; // Import the new model
+import crypto from 'crypto';
+
 
 const currency = 'INR';
 
@@ -325,21 +327,20 @@ const cancelBooking = async (req, res) => {
     }
 };
 
-
 const subscribeNewsletter = async (req, res) => {
     try {
         const { email } = req.body;
 
-        // Check if the email is already registered in the database
-        const existingUser = await userModel.findOne({ email });
+        // Check if the email is already registered in the newsletter collection
+        const existingSubscriber = await NewsletterModel.findOne({ email });
 
-        if (existingUser) {
-            // If the email is registered, notify the user
+        if (existingSubscriber) {
+            // If the email is already subscribed, notify the user
             return res.json({ success: true, message: "You have already subscribed and are eligible for the discount.", discountCode: '' });
         } else {
-            // If the email is not registered, create a new entry in the user model
-            const newUser = new userModel({ email });
-            await newUser.save();
+            // If the email is not subscribed, create a new entry in the newsletter collection
+            const newSubscriber = new NewsletterModel({ email });
+            await newSubscriber.save();
 
             // Generate a discount code
             const discountCode = `DISCOUNT-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
@@ -357,6 +358,7 @@ const subscribeNewsletter = async (req, res) => {
     }
 };
 
+export default subscribeNewsletter;
 
 
 export { verifyStripe, verifyRazorpay, bookVehicle, bookVehicleRazorPay, bookVehicleStripe, allBookings, userBookings, updateStatus, cancelBooking, subscribeNewsletter }

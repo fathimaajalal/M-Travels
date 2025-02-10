@@ -1,17 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { backendUrl, currency } from '../App';
+import { backendUrl } from '../App';
 import { toast } from 'react-toastify';
-import { assets } from '../assets/assets';
-import { Line, Bar } from 'react-chartjs-2';
-import { Chart as ChartJS } from 'chart.js/auto';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const Reports = ({ token }) => {
   const [bookings, setBookings] = useState([]);
-  const [revenueData, setRevenueData] = useState([]);
-  const [statusData, setStatusData] = useState([]);
-  const [vehicleData, setVehicleData] = useState([]);
-  
+
   const fetchAllBookings = async () => {
     if (!token) {
       return null;
@@ -25,8 +22,6 @@ const Reports = ({ token }) => {
       );
       if (response.data.success) {
         setBookings(response.data.bookings);
-        console.log(response.data);
-        generateReports(response.data.bookings); // Call generateReports when data is fetched
       } else {
         toast.error(response.data.message);
       }
@@ -35,173 +30,182 @@ const Reports = ({ token }) => {
     }
   };
 
-  const generateReports = (bookings) => {
-    // Revenue Data (Total Revenue Over Time)
-    const revenue = bookings.map(booking => booking.amount);
-    setRevenueData(revenue);
-
-    // Status Data (Bookings by Status)
-    const statusCount = {
-      'Booking Successful': 0,
-      'On the way': 0,
-      'Reached': 0,
-      'Canceled': 0,
-    };
-
-    bookings.forEach(booking => {
-      statusCount[booking.status] += 1;
-    });
-    setStatusData(Object.values(statusCount));
-
-    // Vehicle Data (Bookings per Vehicle)
-    const vehicleCount = {};
-    bookings.forEach(booking => {
-      vehicleCount[booking.vehicle] = vehicleCount[booking.vehicle] ? vehicleCount[booking.vehicle] + 1 : 1;
-    });
-    setVehicleData(Object.entries(vehicleCount));
-  };
-
   useEffect(() => {
     fetchAllBookings();
   }, [token]);
 
+  // Process data for charts
+  const processDataForCharts = () => {
+    const statusCounts = {};
+    const vehicleCounts = {};
+    const revenueData = {};
+
+    bookings.forEach(booking => {
+      // Count bookings by status
+      statusCounts[booking.status] = (statusCounts[booking.status] || 0) + 1;
+
+      // Count bookings by vehicle
+      vehicleCounts[booking.vehicle] = (vehicleCounts[booking.vehicle] || 0) + 1;
+
+      // Calculate revenue by date
+      const date = new Date(booking.date).toLocaleDateString();
+      revenueData[date] = (revenueData[date] || 0) + booking.amount;
+    });
+
+    const statusData = Object.keys(statusCounts).map(status => ({
+      name: status,
+      value: statusCounts[status]
+    }));
+
+    const vehicleData = Object.keys(vehicleCounts).map(vehicle => ({
+      name: vehicle,
+      value: vehicleCounts[vehicle]
+    }));
+
+    const revenueChartData = Object.keys(revenueData).map(date => ({
+      date,
+      revenue: revenueData[date]
+    }));
+
+    return { statusData, vehicleData, revenueChartData };
+  };
+
+  const { statusData, vehicleData, revenueChartData } = processDataForCharts();
+
+  // Color theme matching #C586A5
+  const colorTheme = ['#C586A5', '#A58BC5', '#86A5C5', '#A5C586', '#C5A586', '#86C5A5'];
+
+  // Function to download PDF
+  const downloadPDF = () => {
+    const doc = new jsPDF();
+
+    // Add title
+    doc.setFontSize(18);
+    doc.text('Booking Reports', 10, 20);
+
+    // Reverse booking data for PDF
+    const reversedBookings = [...bookings].reverse();
+
+    // Add booking data as a table
+    const tableData = reversedBookings.map(booking => [
+      booking.vehicle,
+      booking.status,
+      booking.paymentMethod,
+      booking.payment ? 'Done' : 'Pending',
+      new Date(booking.bookDate).toLocaleDateString(),
+      new Date(booking.date).toLocaleDateString(),
+      `${booking.firstName} ${booking.lastName}`,
+      booking.phone,
+      `₹${booking.amount.toFixed(2)}` // Use ₹ for currency
+    ]);
+
+    doc.autoTable({
+      head: [['Vehicle', 'Status', 'Payment Method', 'Payment', 'Booked For', 'Booked On', 'Name', 'Phone', 'Revenue']],
+      body: tableData,
+      startY: 30,
+      theme: 'grid',
+      styles: { fontSize: 10 },
+      headStyles: { fillColor: '#C586A5' } // Use the main color for the table header
+    });
+
+    // Add revenue chart to PDF
+    doc.addPage();
+    doc.setFontSize(18);
+    doc.text('Revenue Over Time', 10, 20);
+
+    // Create a table for revenue data
+    const revenueTableData = revenueChartData.map(data => [data.date, `₹${data.revenue.toFixed(2)}`]);
+
+    doc.autoTable({
+      head: [['Date', 'Revenue']],
+      body: revenueTableData,
+      startY: 30,
+      theme: 'grid',
+      styles: { fontSize: 10 },
+      headStyles: { fillColor: '#C586A5' }
+    });
+
+    // Save the PDF
+    doc.save('booking_reports.pdf');
+  };
+
   return (
     <div>
       <h3 className="text-3xl font-semibold mb-8 text-center">Booking Reports</h3>
-      
-      {/* Display the charts */}
-      <div className="mb-8">
-        <h4 className="text-2xl font-semibold">Revenue Over Time</h4>
-        <div className="chart-container" style={{ position: 'relative', height: '300px', width: '100%' }}>
-          <Line
-            data={{
-              labels: bookings.map(booking => new Date(booking.date).toLocaleDateString()),
-              datasets: [{
-                label: 'Total Revenue',
-                data: revenueData,
-                fill: false,
-                borderColor: '#42A5F5',
-                tension: 0.1,
-              }],
-            }}
-            options={{
-              maintainAspectRatio: false,
-              responsive: true,
-              scales: {
-                x: {
-                  ticks: {
-                    maxRotation: 0,
-                    minRotation: 0,
-                  },
-                },
-              },
-            }}
-          />
-        </div>
+
+      {/* Download PDF Button */}
+      <div className="text-center mb-8">
+        <button
+          onClick={downloadPDF}
+          className="bg-[#C586A5] hover:bg-[#A58BC5] text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300"
+        >
+          Download Report as PDF
+        </button>
       </div>
 
-      <div className="mb-8">
-        <h4 className="text-2xl font-semibold">Bookings by Status</h4>
-        <div className="chart-container" style={{ position: 'relative', height: '300px', width: '100%' }}>
-          <Bar
-            data={{
-              labels: ['Booking Successful', 'On the way', 'Reached', 'Canceled'],
-              datasets: [{
-                label: 'Booking Status Count',
-                data: statusData,
-                backgroundColor: ['#42A5F5', '#66BB6A', '#FF7043', '#FFEB3B'],
-              }],
-            }}
-            options={{
-              maintainAspectRatio: false,
-              responsive: true,
-              scales: {
-                x: {
-                  beginAtZero: true,
-                },
-              },
-            }}
+      {/* Bar Chart for Bookings by Vehicle */}
+      <div className="w-full p-4">
+        <h4 className="text-xl font-semibold mb-4 text-center">Bookings by Vehicle</h4>
+        <BarChart
+          width={800}
+          height={400}
+          data={vehicleData}
+          margin={{ top: 20, right: 30, left: 20, bottom: 50 }} // Increased bottom margin for labels
+        >
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis
+            dataKey="name"
+            angle={-45} // Rotate labels for better readability
+            textAnchor="end"
+            interval={0} // Show all labels
+            tick={{ fontSize: 12 }} // Adjust font size
           />
-        </div>
+          <YAxis />
+          <Tooltip />
+          <Legend />
+          <Bar dataKey="value" fill="#C586A5" /> {/* Use the specified color for bars */}
+        </BarChart>
       </div>
 
-      <div className="mb-8">
-        <h4 className="text-2xl font-semibold">Bookings per Vehicle</h4>
-        <div className="chart-container" style={{ position: 'relative', height: '300px', width: '100%' }}>
-          <Bar
-            data={{
-              labels: vehicleData.map(([vehicle]) => vehicle),
-              datasets: [{
-                label: 'Booking Count',
-                data: vehicleData.map(([, count]) => count),
-                backgroundColor: '#FFA726',
-              }],
-            }}
-            options={{
-              maintainAspectRatio: false,
-              responsive: true,
-              scales: {
-                x: {
-                  beginAtZero: true,
-                },
-              },
-            }}
-          />
-        </div>
+      {/* Pie Chart for Bookings by Status */}
+      <div className="w-full p-4">
+        <h4 className="text-xl font-semibold mb-4 text-center">Bookings by Status</h4>
+        <PieChart width={800} height={400}>
+          <Pie
+            data={statusData}
+            cx="50%"
+            cy="50%"
+            labelLine={false}
+            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(2)}%`}
+            outerRadius={150} // Increased outer radius for a larger pie chart
+            fill="#8884d8"
+            dataKey="value"
+          >
+            {statusData.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={colorTheme[index % colorTheme.length]} />
+            ))}
+          </Pie>
+          <Tooltip />
+          <Legend />
+        </PieChart>
       </div>
 
-      {/* List of Bookings (for reference) */}
-      <div>
-        {
-          // Reverse the bookings array before mapping
-          bookings.slice().reverse().map((booking, index) => {
-            return (
-              <div className='my-8 border-2 border-gray-200 p-6 text-sm sm:text-base text-gray-700 rounded-lg shadow-lg min-h-[250px]' key={index}>
-
-                {/* Flex container to align divs side by side */}
-                <div className='flex gap-8 items-start'>
-                  {/* 1st div - Icon and vehicle name */}
-                  <div className='flex flex-col items-center'>
-                    <img className='w-20' src={assets.book_icon} alt="Parcel Icon" />
-                    <p className='mt-4 font-semibold text-lg'>{booking.vehicle}</p>
-                  </div>
-
-                  {/* 2nd div - Price, Method, Payment, Booked For/On */}
-                  <div className='flex-1'>
-                    <p className='font-semibold text-xl mt-3'>{currency}{booking.amount}</p>
-                    <p className='text-base mt-3'>Method: {booking.paymentMethod}</p>
-                    <p className='text-base mt-2'>Payment: {booking.payment ? 'Done' : 'Pending'}</p>
-                    <p className='text-base mt-3'>Booked For: {new Date(booking.bookDate).toLocaleDateString()}</p>
-                    <p className='text-base mt-2'>Booked On: {new Date(booking.date).toLocaleDateString()}</p>
-                  </div>
-
-                  {/* 3rd div - Name and Phone number */}
-                  <div className='flex-1'>
-                    <p className='font-semibold text-lg mt-3'>{booking.firstName} {booking.lastName}</p>
-                    <p className='text-base mt-2'>{booking.phone}</p>
-                  </div>
-
-                  {/* 4th div - Status and From/To (if available) */}
-                  <div className='flex-1'>
-                    <select onChange={(event) => statusHandler(event, booking._id)} value={booking.status} className='p-3 font-semibold border rounded-lg text-base mt-3'>
-                      <option value="Booking Successful">Booking Successful</option>
-                      <option value="On the way">On the way</option>
-                      <option value="Reached">Reached</option>
-                      <option value="Canceled">Canceled</option>
-                    </select>
-
-                    {/* Conditionally render from and to stops if available */}
-                    {booking.fromStop && booking.toStop && (
-                      <p className='text-base mt-3'>
-                        {booking.fromStop} &rarr; {booking.toStop}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })
-        }
+      {/* Line Chart for Revenue Over Time */}
+      <div className="w-full p-4">
+        <h4 className="text-xl font-semibold mb-4 text-center">Revenue Over Time</h4>
+        <LineChart
+          width={800}
+          height={400}
+          data={revenueChartData}
+          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="date" />
+          <YAxis />
+          <Tooltip />
+          <Legend />
+          <Line type="monotone" dataKey="revenue" stroke="#C586A5" strokeWidth={2} /> {/* Use the specified color for the line */}
+        </LineChart>
       </div>
     </div>
   );
