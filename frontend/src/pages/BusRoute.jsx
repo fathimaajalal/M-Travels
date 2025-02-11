@@ -6,36 +6,62 @@ import { assets } from '../assets/assets';
 const BusRoute = () => {
   const { routeId } = useParams();
   const { busRoutes, currency } = useContext(BookContext);
-  const [routeData, setRouteData] = useState(false);
+  const [routeData, setRouteData] = useState(null);
   const [image, setImage] = useState('');
+  const [fromStop, setFromStop] = useState('');
+  const [toStop, setToStop] = useState('');
+  const [price, setPrice] = useState(null);
 
-  const fetchRouteData = async () => {
-    busRoutes.map((item) => {
-      if (item._id === routeId) {
-        setRouteData(item);
-        setImage(item.image[0]);
-        console.log(item);
-        return null;
-      }
-    });
+  const fetchRouteData = () => {
+    const selectedRoute = busRoutes.find((item) => item._id === routeId);
+    if (selectedRoute) {
+      setRouteData(selectedRoute);
+      setImage(selectedRoute.image[0]);
+      setPrice(selectedRoute.price);
+    }
   };
 
   const navigate = useNavigate();
 
   // Function to check if the user is logged in based on token
   const isUserLoggedIn = () => {
-    const token = localStorage.getItem('token'); // or use context if storing token there
-    return token ? true : false;
+    return !!localStorage.getItem('token');
   };
 
-  const handleBookNow = (routeId) => {
+
+  // const handleBookNow = (routeId, price) => {
+  //   if (!isUserLoggedIn()) {
+  //     alert("Please log in to proceed!");
+  //     navigate('/login'); // Redirect to login if not logged in
+  //     return;
+  //   }
+  //   navigate('/book-ticket', { state: { routeId, price } });
+  // };
+  
+  const handleBookNow = (routeId, price) => {
     if (!isUserLoggedIn()) {
       alert("Please log in to proceed!");
-      navigate('/login');  // Navigate to the login page if not logged in
+      navigate('/login'); // Redirect to login if not logged in
       return;
     }
-    navigate('/book-ticket', { state: { routeId } });
+    navigate('/book-ticket', { state: { routeId, price } });
   };
+
+
+  // Update price based on selected stops
+  useEffect(() => {
+    if (fromStop && toStop) {
+      const selectedRoute = busRoutes.find(route => route._id === routeId);
+      if (selectedRoute) {
+        const stops = selectedRoute.stops;
+        const fromIndex = stops.indexOf(fromStop);
+        const toIndex = stops.indexOf(toStop);
+        const stopDifference = Math.abs(toIndex - fromIndex);
+        const updatedPrice = selectedRoute.price + stopDifference * 10;
+        setPrice(updatedPrice);
+      }
+    }
+  }, [fromStop, toStop, busRoutes, routeId]);
 
   useEffect(() => {
     fetchRouteData();
@@ -67,21 +93,18 @@ const BusRoute = () => {
         <div className="flex-1">
           <h1 className="text-2xl font-medium mt-2">{routeData.name}</h1>
           <div className="flex items-center gap-1 mt-2">
-            <img src={assets.star_icon} className="w-3 5" alt="" />
-            <img src={assets.star_icon} className="w-3 5" alt="" />
-            <img src={assets.star_icon} className="w-3 5" alt="" />
-            <img src={assets.star_icon} className="w-3 5" alt="" />
-            <img src={assets.star_dull} className="w-3 5" alt="" />
+            <img src={assets.star_icon} className="w-3.5" alt="" />
+            <img src={assets.star_icon} className="w-3.5" alt="" />
+            <img src={assets.star_icon} className="w-3.5" alt="" />
+            <img src={assets.star_icon} className="w-3.5" alt="" />
+            <img src={assets.star_dull} className="w-3.5" alt="" />
             <p className="text-sm pl-2">(23)</p>
           </div>
 
-          {/* Conditional display for price */}
-          {routeData.category !== 'Regular' && (
-            <p className="mt-5 text-3xl font-medium">
-              {currency}
-              {routeData.price}
-            </p>
-          )}
+          {/* Conditional Price Display */}
+          <p className="mt-5 text-3xl font-medium">
+            {currency}{price}
+          </p>
 
           <p className="mt-5 text-gray-500 md:w-4/5">{routeData.description}</p>
 
@@ -91,53 +114,79 @@ const BusRoute = () => {
               <p>Departure Time: {routeData.departureTime || 'N/A'}</p>
               <p>Arrival Time: {routeData.arrivalTime || 'N/A'}</p>
 
-              <div className="flex flex-wrap gap-4 mt-4">
-                <p>Stops: {routeData.stops && routeData.stops.length > 0 ? '' : 'Standard'}</p>
-                {routeData.stops && routeData.stops.length > 0 && (
-                  <div className="stops-box sm:w-[88%] w-full p-4 border border-gray-300 rounded-lg">
+              {/* Stops Section */}
+              {/* <div className="flex flex-wrap gap-2 mt-4 items-center">
+                <p className="font-medium">Stops:</p>
+                {routeData.stops && routeData.stops.length > 0 ? (
+                  <div className="flex flex-wrap items-center">
                     {routeData.stops.map((stop, index) => (
-                      <p key={index} className="stop-item">{stop}</p>
+                      <span key={index} className="stop-item">
+                        {stop}
+                        {index < routeData.stops.length - 1 && " → "}
+                      </span>
                     ))}
                   </div>
+                ) : (
+                  <p>Standard</p>
                 )}
+              </div> */}
+
+              {/* Conditional From/To Inputs */}
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700">Select Stops:</label>
+                <div className="flex gap-4 mt-2">
+                  <select
+                    name="fromStop"
+                    value={fromStop}
+                    onChange={(e) => setFromStop(e.target.value)}
+                    className="border border-gray-300 rounded py-1.5 px-3.5 w-full"
+                    required
+                  >
+                    <option value="">From</option>
+                    {routeData.stops.map(stop => (
+                      <option key={stop} value={stop}>{stop}</option>
+                    ))}
+                  </select>
+
+                  <select
+                    name="toStop"
+                    value={toStop}
+                    onChange={(e) => setToStop(e.target.value)}
+                    className="border border-gray-300 rounded py-1.5 px-3.5 w-full"
+                    required
+                  >
+                    <option value="">To</option>
+                    {routeData.stops.map(stop => (
+                      <option key={stop} value={stop}>{stop}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
+
             </div>
           )}
 
           <br />
-          <button
+          {/* <button
             className="bg-black text-white px-8 py-3 text-sm active:bg-gray-700"
-            onClick={() => handleBookNow(routeData._id)} // Now checks if user is logged in before proceeding
+            onClick={() => handleBookNow(routeData._id)}
           >
             BOOK NOW
-          </button>
+          </button> */}
+
+<button
+  className="bg-black text-white px-8 py-3 text-sm active:bg-gray-700"
+  onClick={() => handleBookNow(routeData._id, price)}
+>
+  BOOK NOW
+</button>
+
           <hr className="mt-8 sm:w-4/5" />
           <div className="text-sm text-gray-500 mt-5 flex flex-col gap-1">
             <p>Secure Payments.</p>
             <p>Comfortable Rides.</p>
             <p>Easy Cancellations.</p>
           </div>
-        </div>
-      </div>
-
-      {/* Description & Review */}
-      <div className="mt-20">
-        <div className="flex">
-          <b className="border px-5 py-3 text-sm cursor-pointer">Description</b>
-          <p className="border px-5 py-3 text-sm cursor-pointer">
-            Reviews (122)
-          </p>
-        </div>
-
-        {/* Description Content */}
-        <div className="flex flex-col gap-4 border px-6 py-6 text-sm text-gray-500">
-          <p>
-            A travel website is an online platform that facilitates the planning and booking of trips, vacations, and travel-related services.
-          </p>
-          <p>
-            Travel websites typically display destinations or travel packages along with detailed descriptions, pricing, and user reviews, allowing customers to make informed travel decisions.
-          </p>
-
         </div>
       </div>
     </div>

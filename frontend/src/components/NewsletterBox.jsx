@@ -37,13 +37,8 @@ const NewsletterBox = () => {
       const data = response.data; // Get the response data directly
 
       if (data.success) {
-        if (data.discountCode) {
-          setMessage(data.message);
-          setDiscountCode(data.discountCode);
-        } else {
-          setMessage(data.message);
-          setDiscountCode('');
-        }
+        setMessage(data.message);
+        setDiscountCode('');
       } else {
         setMessage(data.message);
       }
@@ -55,7 +50,7 @@ const NewsletterBox = () => {
 
   return (
     <div className='text-center mt-10'>
-      <p className='text-2xl font-medium text-gray-800'>Subscribe now & get 20% off your next adventure</p>
+      <p className='text-2xl font-medium text-gray-800'>Exclusive Access to Travel Deals!</p>
       <p className='text-gray-400 mt-3'>
         Stay updated with our latest travel offers, exclusive deals, and exciting destination recommendations.
       </p>
@@ -72,7 +67,6 @@ const NewsletterBox = () => {
       </form>
 
       {message && <p className='text-red-600 mt-4'>{message}</p>}
-      {discountCode && <p className='text-gray-800 font-bold mt-2'>Your Discount Code: {discountCode}</p>}
     </div>
   );
 };

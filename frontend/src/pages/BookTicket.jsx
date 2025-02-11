@@ -23,14 +23,14 @@ const BookTicket = () => {
 
   const location = useLocation();
 
-  // Retrieve bus route info and category from the location state
+
   useEffect(() => {
     if (location.state) {
-      const { routeId } = location.state;
+      const { routeId, price } = location.state;
       const selectedRoute = busRoutes.find(route => route._id === routeId);
       if (selectedRoute) {
         setBusCategory(selectedRoute.category); // Store the category
-        setPrice(selectedRoute.price); // Store the base price
+        setPrice(price); // Set the price from the state
       }
     }
   }, [location.state, busRoutes]);
@@ -231,7 +231,7 @@ const onSubmitHandler = async (event) => {
           />
           
           {/* Conditional From/To Inputs */}
-          {busCategory === 'Regular' && (
+          {/* {busCategory === 'Regular' && (
             <>
               <select
                 name="fromStop"
@@ -259,7 +259,7 @@ const onSubmitHandler = async (event) => {
                 ))}
               </select>
             </>
-          )}
+          )} */}
         </div>
       </div>
 

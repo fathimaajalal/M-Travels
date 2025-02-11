@@ -1,5 +1,5 @@
 import express from 'express'
-import {bookVehicle, bookVehicleRazorPay, bookVehicleStripe, allBookings, userBookings, updateStatus, verifyStripe, cancelBooking, subscribeNewsletter} from '../controllers/bookingController.js'
+import {bookVehicle, bookVehicleRazorPay, bookVehicleStripe, allBookings, userBookings, updateStatus, verifyStripe, cancelBooking, subscribeNewsletter, validateDiscountCode} from '../controllers/bookingController.js'
 import adminAuth from '../middleware/adminAuth.js'
 import authUser from '../middleware/auth.js'
 
@@ -21,5 +21,8 @@ bookingRouter.post('/cancel',authUser,cancelBooking)
 // User Feature
 bookingRouter.post('/userbookings',authUser,userBookings)
 bookingRouter.post('/subscribe', authUser, subscribeNewsletter);
+
+  // Add this route to your booking router
+  bookingRouter.post('/validate-discount', authUser, validateDiscountCode);
 
 export default bookingRouter

@@ -50,6 +50,50 @@ const bookVehicle = async (req, res) => {
     }
 }
 
+// deepseek discount - Book Vehicle (Cash on Delivery)
+// const bookVehicle = async (req, res) => {
+//     try {
+//       const { userId, vehicle, firstName, lastName, phone, amount, image, bookDate, fromStop, toStop, discountCode } = req.body;
+  
+//       let finalAmount = amount;
+  
+//       // Validate and apply discount if a discount code is provided
+//       if (discountCode) {
+//         const discount = await NewsletterModel.findOne({ discountCode });
+//         if (discount) {
+//           finalAmount = amount * 0.8; // Apply 20% discount
+//         } else {
+//           return res.json({ success: false, message: "Invalid discount code." });
+//         }
+//       }
+  
+//       const bookingData = {
+//         userId,
+//         firstName,
+//         lastName,
+//         phone,
+//         vehicle,
+//         amount: finalAmount, // Use the discounted amount
+//         paymentMethod: "COD",
+//         payment: false,
+//         image,
+//         bookDate: new Date(bookDate), // Convert to Date object
+//         date: Date.now(),
+//         fromStop,
+//         toStop,
+//         discountCode: discountCode || null, // Store the discount code if used
+//       };
+  
+//       const newBooking = new bookingModel(bookingData);
+//       await newBooking.save();
+  
+//       res.json({ success: true, message: "Booking Successful" });
+//     } catch (error) {
+//       console.log(error);
+//       res.json({ success: false, message: error.message });
+//     }
+//   };
+
 // Book Vehicle and Create Stripe Session
 const bookVehicleStripe = async (req, res) => {
     try {
@@ -111,6 +155,61 @@ const bookVehicleStripe = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
+
+// deepseek - discount
+// const bookVehicleStripe = async (req, res) => {
+//     try {
+//       const { userId, vehicle, firstName, lastName, phone, amount, image, bookDate, fromStop, toStop, discountCode } = req.body;
+  
+//       let finalAmount = amount;
+//       if (discountCode) {
+//         const discount = await NewsletterModel.findOne({ discountCode });
+//         if (discount) {
+//           finalAmount = amount * 0.8; // Apply 20% discount
+//         }
+//       }
+  
+//       const session = await stripe.checkout.sessions.create({
+//         payment_method_types: ['card'],
+//         line_items: [
+//           {
+//             price_data: {
+//               currency: 'INR',
+//               product_data: {
+//                 name: vehicle,
+//                 images: [image],
+//               },
+//               unit_amount: finalAmount * 100, // Stripe expects amount in paise
+//             },
+//             quantity: 1,
+//           },
+//         ],
+//         mode: 'payment',
+//         success_url: `${process.env.FRONTEND_URL}/booking/success?session_id={CHECKOUT_SESSION_ID}`,
+//         cancel_url: `${process.env.FRONTEND_URL}/booking/cancel`,
+//         metadata: {
+//           firstName,
+//           lastName,
+//           phone,
+//           paymentMethod: "Stripe",
+//           userId,
+//           vehicle,
+//           bookDate,
+//           fromStop,
+//           toStop,
+//           image,
+//           bookDate: new Date(bookDate).toISOString(),
+//           date: Date.now(),
+//         },
+//       });
+  
+//       res.json({ success: true, sessionId: session.id });
+//     } catch (error) {
+//       console.error("Error creating Stripe session:", error);
+//       res.status(500).json({ success: false, message: error.message });
+//     }
+//   };
 
 // Verify Payment
 const verifyStripe = async (req, res) => {
@@ -327,6 +426,37 @@ const cancelBooking = async (req, res) => {
     }
 };
 
+// const subscribeNewsletter = async (req, res) => {
+//     try {
+//         const { email } = req.body;
+
+//         // Check if the email is already registered in the newsletter collection
+//         const existingSubscriber = await NewsletterModel.findOne({ email });
+
+//         if (existingSubscriber) {
+//             // If the email is already subscribed, notify the user
+//             return res.json({ success: true, message: "You have already subscribed and are eligible for the discount.", discountCode: '' });
+//         } else {
+//             // If the email is not subscribed, create a new entry in the newsletter collection
+//             const newSubscriber = new NewsletterModel({ email });
+//             await newSubscriber.save();
+
+//             // Generate a discount code
+//             const discountCode = `DISCOUNT-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+
+//             // Return the discount code to the user
+//             return res.json({
+//                 success: true,
+//                 message: "Subscription successful! You are eligible for the discount.",
+//                 discountCode: discountCode
+//             });
+//         }
+//     } catch (error) {
+//         console.log(error);
+//         res.json({ success: false, message: error.message });
+//     }
+// };
+
 const subscribeNewsletter = async (req, res) => {
     try {
         const { email } = req.body;
@@ -336,29 +466,46 @@ const subscribeNewsletter = async (req, res) => {
 
         if (existingSubscriber) {
             // If the email is already subscribed, notify the user
-            return res.json({ success: true, message: "You have already subscribed and are eligible for the discount.", discountCode: '' });
+            return res.json({ success: true, message: "You have already subscribed to our exclusive travel deals." });
         } else {
             // If the email is not subscribed, create a new entry in the newsletter collection
             const newSubscriber = new NewsletterModel({ email });
             await newSubscriber.save();
 
-            // Generate a discount code
-            const discountCode = `DISCOUNT-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
-
-            // Return the discount code to the user
+            // Return a success message
             return res.json({
                 success: true,
-                message: "Subscription successful! You are eligible for the discount.",
-                discountCode: discountCode
+                message: "Subscription successful! Get ready for exclusive travel deals straight to your inbox."
             });
         }
     } catch (error) {
         console.log(error);
-        res.json({ success: false, message: error.message });
+        res.json({ success: false, message: "An error occurred. Please try again later." });
     }
 };
 
+
 export default subscribeNewsletter;
 
+// Validate Discount Code
+const validateDiscountCode = async (req, res) => {
+    try {
+      const { discountCode } = req.body;
 
-export { verifyStripe, verifyRazorpay, bookVehicle, bookVehicleRazorPay, bookVehicleStripe, allBookings, userBookings, updateStatus, cancelBooking, subscribeNewsletter }
+      console.log('inside validate discount code');
+  
+      // Check if the discount code exists in the database
+      const discount = await NewsletterModel.findOne({ discountCode });
+  
+      if (discount) {
+        return res.json({ success: true, message: 'Discount code is valid.' });
+      } else {
+        return res.json({ success: false, message: 'Invalid discount code.' });
+      }
+    } catch (error) {
+      console.error(error);
+      res.json({ success: false, message: error.message });
+    }
+  };
+
+export { verifyStripe, verifyRazorpay, bookVehicle, bookVehicleRazorPay, bookVehicleStripe, allBookings, userBookings, updateStatus, cancelBooking, subscribeNewsletter, validateDiscountCode }

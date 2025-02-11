@@ -22,7 +22,7 @@ const About = () => {
           <div>
             <b className="text-gray-800">About Us</b>
             <p>
-              Mubarak Travels has been a trusted name for over 60 years, connecting the rural villages of Vandiperiyar to all major towns. 
+              Mubarak Travels has been a trusted name for over 70 years, connecting the rural villages of Vandiperiyar to all major towns. 
               With over 100 staff members, we pride ourselves on offering reliable and comfortable travel solutions. 
               Our mission is to ensure seamless journeys, exceptional service, and unforgettable travel experiences for everyone.
             </p>
