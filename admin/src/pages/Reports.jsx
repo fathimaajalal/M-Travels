@@ -38,7 +38,7 @@ const Reports = ({ token }) => {
   const processDataForCharts = () => {
     const statusCounts = {};
     const vehicleCounts = {};
-    const revenueData = {};
+    const RevenueData = {};
 
     bookings.forEach(booking => {
       // Count bookings by status
@@ -47,45 +47,98 @@ const Reports = ({ token }) => {
       // Count bookings by vehicle
       vehicleCounts[booking.vehicle] = (vehicleCounts[booking.vehicle] || 0) + 1;
 
-      // Calculate revenue by date
+      // Calculate Revenue by date
       const date = new Date(booking.date).toLocaleDateString();
-      revenueData[date] = (revenueData[date] || 0) + booking.amount;
+      RevenueData[date] = (RevenueData[date] || 0) + booking.amount;
     });
 
     const statusData = Object.keys(statusCounts).map(status => ({
       name: status,
-      value: statusCounts[status]
+      Bookings: statusCounts[status]
     }));
 
     const vehicleData = Object.keys(vehicleCounts).map(vehicle => ({
       name: vehicle,
-      value: vehicleCounts[vehicle]
+      Bookings: vehicleCounts[vehicle]
     }));
 
-    const revenueChartData = Object.keys(revenueData).map(date => ({
+    const RevenueChartData = Object.keys(RevenueData).map(date => ({
       date,
-      revenue: revenueData[date]
+      Revenue: RevenueData[date]
     }));
 
-    return { statusData, vehicleData, revenueChartData };
+    return { statusData, vehicleData, RevenueChartData };
   };
 
-  const { statusData, vehicleData, revenueChartData } = processDataForCharts();
+  const { statusData, vehicleData, RevenueChartData } = processDataForCharts();
 
   // Color theme matching #C586A5
   const colorTheme = ['#C586A5', '#A58BC5', '#86A5C5', '#A5C586', '#C5A586', '#86C5A5'];
 
   // Function to download PDF
+  // const downloadPDF = () => {
+  //   const doc = new jsPDF();
+
+  //   // Add title
+  //   doc.setFontSize(18);
+  //   doc.text('Booking Reports', 10, 20);
+
+  //   // Reverse booking data for PDF
+  //   const reversedBookings = [...bookings].reverse();
+
+  //   // Add booking data as a table
+  //   const tableData = reversedBookings.map(booking => [
+  //     booking.vehicle,
+  //     booking.status,
+  //     booking.paymentMethod,
+  //     booking.payment ? 'Done' : 'Pending',
+  //     new Date(booking.bookDate).toLocaleDateString(),
+  //     new Date(booking.date).toLocaleDateString(),
+  //     `${booking.firstName} ${booking.lastName}`,
+  //     booking.phone,
+  //     `₹${booking.amount.toFixed(2)}` // Use ₹ for currency
+  //   ]);
+
+  //   doc.autoTable({
+  //     head: [['Vehicle', 'Status', 'Payment Method', 'Payment', 'Booked For', 'Booked On', 'Name', 'Phone', 'Revenue']],
+  //     body: tableData,
+  //     startY: 30,
+  //     theme: 'grid',
+  //     styles: { fontSize: 10 },
+  //     headStyles: { fillColor: '#C586A5' } // Use the main color for the table header
+  //   });
+
+  //   // Add Revenue chart to PDF
+  //   doc.addPage();
+  //   doc.setFontSize(18);
+  //   doc.text('Revenue Over Time', 10, 20);
+
+  //   // Create a table for Revenue data
+  //   const RevenueTableData = RevenueChartData.map(data => [data.date, `₹${data.Revenue.toFixed(2)}`]);
+
+  //   doc.autoTable({
+  //     head: [['Date', 'Revenue']],
+  //     body: RevenueTableData,
+  //     startY: 30,
+  //     theme: 'grid',
+  //     styles: { fontSize: 10 },
+  //     headStyles: { fillColor: '#C586A5' }
+  //   });
+
+  //   // Save the PDF
+  //   doc.save('booking_reports.pdf');
+  // };
+
   const downloadPDF = () => {
     const doc = new jsPDF();
-
+  
     // Add title
     doc.setFontSize(18);
     doc.text('Booking Reports', 10, 20);
-
+  
     // Reverse booking data for PDF
     const reversedBookings = [...bookings].reverse();
-
+  
     // Add booking data as a table
     const tableData = reversedBookings.map(booking => [
       booking.vehicle,
@@ -96,35 +149,47 @@ const Reports = ({ token }) => {
       new Date(booking.date).toLocaleDateString(),
       `${booking.firstName} ${booking.lastName}`,
       booking.phone,
-      `₹${booking.amount.toFixed(2)}` // Use ₹ for currency
+      // `₹${booking.amount.toFixed(2)}` // Use ₹ for currency
+      `Rs. ${booking.amount.toFixed(2)}`
     ]);
-
+  
+    // Define column widths
+    const columnWidths = [30, 30, 30, 20, 30, 30, 40, 30, 25]; // Adjust widths as needed
+  
     doc.autoTable({
       head: [['Vehicle', 'Status', 'Payment Method', 'Payment', 'Booked For', 'Booked On', 'Name', 'Phone', 'Revenue']],
       body: tableData,
       startY: 30,
       theme: 'grid',
       styles: { fontSize: 10 },
-      headStyles: { fillColor: '#C586A5' } // Use the main color for the table header
+      headStyles: { fillColor: '#C586A5' }, // Use the main color for the table header
+      columnStyles: {
+        8: { cellWidth: 25, halign: 'right' } // Set width and right-align for the Revenue column
+      },
+      margin: { horizontal: 10 }, // Add margin for better spacing
+      columnWidth: 'wrap' // Adjust column widths automatically
     });
-
-    // Add revenue chart to PDF
+  
+    // Add Revenue chart to PDF
     doc.addPage();
     doc.setFontSize(18);
     doc.text('Revenue Over Time', 10, 20);
-
-    // Create a table for revenue data
-    const revenueTableData = revenueChartData.map(data => [data.date, `₹${data.revenue.toFixed(2)}`]);
-
+  
+    // Create a table for Revenue data
+    const RevenueTableData = RevenueChartData.map(data => [data.date, `Rs. ${data.Revenue.toFixed(2)}`]);
+  
     doc.autoTable({
       head: [['Date', 'Revenue']],
-      body: revenueTableData,
+      body: RevenueTableData,
       startY: 30,
       theme: 'grid',
       styles: { fontSize: 10 },
-      headStyles: { fillColor: '#C586A5' }
+      headStyles: { fillColor: '#C586A5' },
+      columnStyles: {
+        1: { cellWidth: 30, halign: 'right' } // Set width and right-align for the Revenue column
+      }
     });
-
+  
     // Save the PDF
     doc.save('booking_reports.pdf');
   };
@@ -163,7 +228,7 @@ const Reports = ({ token }) => {
           <YAxis />
           <Tooltip />
           <Legend />
-          <Bar dataKey="value" fill="#C586A5" /> {/* Use the specified color for bars */}
+          <Bar dataKey="Bookings" fill="#C586A5" /> {/* Use the specified color for bars */}
         </BarChart>
       </div>
 
@@ -179,7 +244,7 @@ const Reports = ({ token }) => {
             label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(2)}%`}
             outerRadius={150} // Increased outer radius for a larger pie chart
             fill="#8884d8"
-            dataKey="value"
+            dataKey="Bookings"
           >
             {statusData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={colorTheme[index % colorTheme.length]} />
@@ -196,7 +261,7 @@ const Reports = ({ token }) => {
         <LineChart
           width={800}
           height={400}
-          data={revenueChartData}
+          data={RevenueChartData}
           margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
         >
           <CartesianGrid strokeDasharray="3 3" />
@@ -204,7 +269,7 @@ const Reports = ({ token }) => {
           <YAxis />
           <Tooltip />
           <Legend />
-          <Line type="monotone" dataKey="revenue" stroke="#C586A5" strokeWidth={2} /> {/* Use the specified color for the line */}
+          <Line type="monotone" dataKey="Revenue" stroke="#C586A5" strokeWidth={2} /> {/* Use the specified color for the line */}
         </LineChart>
       </div>
     </div>
