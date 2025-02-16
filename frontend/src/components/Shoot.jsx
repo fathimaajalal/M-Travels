@@ -7,13 +7,7 @@ const Shoot = () => {
     const { busRoutes } = useContext(BookContext); // Use the context for vehicles
     const [shootVehicles, setShootVehicles] = useState([]);
 
-    // useEffect(() => {
-    //     if (busRoutes) {
-    //         const filteredVehicles = busRoutes.filter(route => route.category === "Shoot");
-    //         setShootVehicles(filteredVehicles);
-    //     }
-    // }, [busRoutes]);
-    
+
 
     useEffect(() => {
         // Filter vehicles specifically for shoots.

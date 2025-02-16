@@ -15,9 +15,10 @@ const BusItem = ({ id, image, name, price, category }) => {
         />
       </div>
       <p className='pt-3 pb-1 text-lg'>{name}</p>
-      {category !== 'Regular' && (  // Hide price for 'Regular' category
-        <p className='text-lg font-medium'>{currency}{price}</p>
-      )}
+      {category !== 'Regular' && price && (  // Ensure price is present before showing currency
+  <p className='text-lg font-medium'>{currency}{price}</p>
+)}
+
     </Link>
   );
 };

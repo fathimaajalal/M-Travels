@@ -11,6 +11,7 @@ import Update from './pages/Update'
 import { ToastContainer } from 'react-toastify';
 import Reports from './pages/Reports'
 import UserList from './pages/UserList'
+import Newsletter from "./pages/Newsletter"; 
 
 export const backendUrl = import.meta.env.VITE_BACKEND_URL
 export const currency = '₹';
@@ -41,6 +42,7 @@ const App = () => {
                 <Route path='/update' element={<Update token={token} />} />
                 <Route path="/reports" element={<Reports token={token} />} />
                 <Route path="/users" element={<UserList token={token} />} />
+                <Route path="/newsletter" element={<Newsletter />} /> {/* Add the Newsletter route */}
                               </Routes>
             </div>
           </div>

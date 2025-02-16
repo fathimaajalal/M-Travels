@@ -1,5 +1,5 @@
 import express from 'express'
-import { listVehicle, addVehicle, removeVehicle, singleVehicle, updateVehicle } from '../controllers/vehicleController.js'
+import { listVehicle, addVehicle, removeVehicle, singleVehicle, updateVehicle, sendNewsletter, } from '../controllers/vehicleController.js'
 import upload from '../middleware/multer.js';
 import adminAuth from '../middleware/adminAuth.js';
 
@@ -16,5 +16,7 @@ vehicleRouter.post('/update', adminAuth, upload.fields([
     { name: 'image3', maxCount: 1 },
     { name: 'image4', maxCount: 1 },
   ]), updateVehicle);
+
+  vehicleRouter.post("/send-newsletter", adminAuth, sendNewsletter);
   
 export default vehicleRouter

@@ -6,7 +6,7 @@ import report from './report.png'
 import profile_icon from './profile_icon.png'
 import list_icon from './list_icon.png'
 import update_icon from './update_icon.png'
-
+import email_icon from './email_icon.png'
 
 export const assets = {
     logo,
@@ -16,5 +16,6 @@ export const assets = {
     report,
     profile_icon,
     list_icon,
-    update_icon
+    update_icon,
+    email_icon
 }

@@ -1,6 +1,7 @@
-import { v2 as cloudinary } from "cloudinary"
-import busRouteModel from "../models/busRouteModel.js"
-
+import { v2 as cloudinary } from "cloudinary";
+import busRouteModel from "../models/busRouteModel.js";
+import NewsletterModel from "../models/newsletterModel.js"; // Import the newsletter model
+import nodemailer from "nodemailer";
 
 // add vehicle
 const addVehicle = async (req, res) => {
@@ -135,4 +136,53 @@ const updateVehicle = async (req, res) => {
   }
 };
 
-export { listVehicle, addVehicle, removeVehicle, singleVehicle, updateVehicle }
+
+
+// Configure Nodemailer
+const transporter = nodemailer.createTransport({
+  service: "gmail", // Use your email service (e.g., Gmail, Outlook)
+  auth: {
+    user: process.env.EMAIL_USER, // Your email address
+    pass: process.env.EMAIL_PASSWORD, // Your email password or app-specific password
+  },
+});
+
+// Send Newsletter
+const sendNewsletter = async (req, res) => {
+  try {
+    const { subject, content } = req.body;
+
+    // Fetch all subscribed emails
+    const subscribers = await NewsletterModel.find({}, "email");
+
+    if (subscribers.length === 0) {
+      return res.json({ success: false, message: "No subscribers found." });
+    }
+    // Prepare email options
+    const mailOptions = {
+      from: process.env.EMAIL_USER, // Sender address
+      subject: subject, // Email subject
+      html: content, // Email content (HTML format)
+    };
+
+    // Send emails to all subscribers
+    for (const subscriber of subscribers) {
+      mailOptions.to = subscriber.email;
+      await transporter.sendMail(mailOptions);
+    }
+
+    res.json({ success: true, message: "Newsletter sent successfully!" });
+  } catch (error) {
+    console.error("Error sending newsletter:", error);
+    res.json({ success: false, message: "Failed to send newsletter." });
+  }
+};
+
+export {
+  listVehicle,
+  addVehicle,
+  removeVehicle,
+  singleVehicle,
+  updateVehicle,
+  sendNewsletter,
+};

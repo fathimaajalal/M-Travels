@@ -11,6 +11,8 @@ const BusRoute = () => {
   const [fromStop, setFromStop] = useState('');
   const [toStop, setToStop] = useState('');
   const [price, setPrice] = useState(null);
+  const [showWarning, setShowWarning] = useState(false);
+
 
   const fetchRouteData = () => {
     const selectedRoute = busRoutes.find((item) => item._id === routeId);
@@ -28,24 +30,22 @@ const BusRoute = () => {
     return !!localStorage.getItem('token');
   };
 
-
-  // const handleBookNow = (routeId, price) => {
-  //   if (!isUserLoggedIn()) {
-  //     alert("Please log in to proceed!");
-  //     navigate('/login'); // Redirect to login if not logged in
-  //     return;
-  //   }
-  //   navigate('/book-ticket', { state: { routeId, price } });
-  // };
-  
   const handleBookNow = (routeId, price) => {
     if (!isUserLoggedIn()) {
       alert("Please log in to proceed!");
-      navigate('/login'); // Redirect to login if not logged in
+      navigate('/login');
       return;
     }
+  
+    if (routeData.category === 'Regular' && (!fromStop || !toStop)) {
+      setShowWarning(true);  // Show warning only when user clicks without selecting stops
+      return;
+    }
+  
+    setShowWarning(false);  // Hide warning when everything is correct
     navigate('/book-ticket', { state: { routeId, price } });
   };
+  
 
 
   // Update price based on selected stops
@@ -114,22 +114,6 @@ const BusRoute = () => {
               <p>Departure Time: {routeData.departureTime || 'N/A'}</p>
               <p>Arrival Time: {routeData.arrivalTime || 'N/A'}</p>
 
-              {/* Stops Section */}
-              {/* <div className="flex flex-wrap gap-2 mt-4 items-center">
-                <p className="font-medium">Stops:</p>
-                {routeData.stops && routeData.stops.length > 0 ? (
-                  <div className="flex flex-wrap items-center">
-                    {routeData.stops.map((stop, index) => (
-                      <span key={index} className="stop-item">
-                        {stop}
-                        {index < routeData.stops.length - 1 && " → "}
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <p>Standard</p>
-                )}
-              </div> */}
 
               {/* Conditional From/To Inputs */}
               <div className="mt-4">
@@ -167,19 +151,22 @@ const BusRoute = () => {
           )}
 
           <br />
-          {/* <button
-            className="bg-black text-white px-8 py-3 text-sm active:bg-gray-700"
-            onClick={() => handleBookNow(routeData._id)}
-          >
-            BOOK NOW
-          </button> */}
 
-<button
+          <button
   className="bg-black text-white px-8 py-3 text-sm active:bg-gray-700"
   onClick={() => handleBookNow(routeData._id, price)}
 >
   BOOK NOW
 </button>
+
+{/* Show warning message only after clicking Book Now without selecting stops */}
+{showWarning && (
+  <p className="text-red-500 text-sm mt-2">
+    Please select both 'From' and 'To' stops to proceed.
+  </p>
+)}
+
+
 
           <hr className="mt-8 sm:w-4/5" />
           <div className="text-sm text-gray-500 mt-5 flex flex-col gap-1">
@@ -189,6 +176,29 @@ const BusRoute = () => {
           </div>
         </div>
       </div>
+      {/* Description & Review */}
+<div className="mt-20">
+  <div className="flex">
+    <b className="border px-5 py-3 text-sm cursor-pointer">Description</b>
+    <p className="border px-5 py-3 text-sm cursor-pointer">
+      Reviews (122)
+    </p>
+  </div>
+
+  {/* Description Content */}
+  <div className="flex flex-col gap-4 border px-6 py-6 text-sm text-gray-500">
+    <p>
+      Mubarak Travels is committed to providing affordable and convenient travel solutions for all your journey needs.
+    </p>
+    <p>
+      From regular bus services for daily commuters to tourist buses for group trips, we ensure safe and comfortable travel. We also offer off-road vehicles for adventure seekers and customized vehicle rentals for weddings, pre-wedding shoots, and other special occasions.
+    </p>
+    <p>
+      With a focus on reliability, comfort, and budget-friendly options, Mubarak Travels makes every trip seamless and hassle-free.
+    </p>
+  </div>
+</div>
+
     </div>
   ) : (
     <div className="opacity-0"></div>
